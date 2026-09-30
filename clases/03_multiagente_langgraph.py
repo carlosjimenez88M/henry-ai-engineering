@@ -1,7 +1,6 @@
 # %% [markdown]
 # # Clase 3 · Los Cuatro Fantásticos: elegir y construir una arquitectura
 #
-# **Duración: 120 minutos, incluidas dos pausas.**
 # No vamos a medir inteligencia contando agentes. Vamos a decidir qué estructura
 # resuelve una necesidad y a comprobar que no pierde resultados.
 #
@@ -10,20 +9,20 @@
 # Construimos los dos primeros por partes. El agente con herramientas es una demo
 # guiada; su implementación queda disponible para releer sin memorizarla hoy.
 #
-# | Minutos | Trabajo y producto observable |
-# |---|---|
-# | 0–8 | Clasificar tres necesidades por su forma de trabajo |
-# | 8–18 | Comparar el mapa de arquitecturas y justificar una elección |
-# | 18–30 | Construir estado y workers de un informe paralelo |
-# | 30–40 | Unir ramas sin perder datos y probar el resultado |
-# | 40–45 | Pausa |
-# | 45–55 | Distinguir paralelismo fijo de plan variable |
-# | 55–70 | Construir un orquestador con Send y un reducer |
-# | 70–80 | Observar el bucle de un agente y su límite de llamadas |
-# | 80–85 | Pausa |
-# | 85–100 | Taller: agregar la colección musical al plan |
-# | 100–112 | Comparar resultados y distinguir supervisor de handoff |
-# | 112–120 | Defender una arquitectura con sus límites |
+# **Recorrido de la clase**
+#
+# - Clasificar tres necesidades por su forma de trabajo
+# - Comparar el mapa de arquitecturas y justificar una elección
+# - Construir estado y workers de un informe paralelo
+# - Unir ramas sin perder datos y probar el resultado
+# - Pausa
+# - Distinguir paralelismo fijo de plan variable
+# - Construir un orquestador con Send y un reducer
+# - Observar el bucle de un agente y su límite de llamadas
+# - Pausa
+# - Taller: agregar la colección musical al plan
+# - Comparar resultados y distinguir supervisor de handoff
+# - Defender una arquitectura con sus límites
 #
 # **Cómo trabajar:** anticipá una salida, ejecutá una celda, observá y explicá.
 # La persona que ejecuta y la que revisa intercambian roles durante el reto.
@@ -41,7 +40,7 @@
 # hacer toda la práctica offline; el docente demuestra live. No compartas el .env.
 
 # %% [markdown]
-# ## 0–8 · La forma del problema importa
+# ## La forma del problema importa
 # Tres pedidos: A) buscar y resumir una ficha; B) consultar dos colecciones independientes;
 # C) elegir cuántas colecciones consultar según un plan. Dibujá una línea para A,
 # dos ramas para B y una lista de tareas para C. Todavía no elijas un framework.
@@ -57,7 +56,7 @@ MODE = configure()
 print("Modo de las demos con modelo:", MODE)
 
 # %% [markdown]
-# ## 8–18 · Mapa de arquitecturas: cuándo usar cada una
+# ## Mapa de arquitecturas: cuándo usar cada una
 # Estos son patrones que podemos expresar con LangGraph, no botones mágicos ni
 # categorías excluyentes. Un sistema puede combinar varios.
 #
@@ -75,11 +74,11 @@ print("Modo de las demos con modelo:", MODE)
 # Checkpointing y revisión humana son capacidades que podemos combinar con estos
 # patrones. No convierten por sí solos un workflow en un agente.
 #
-# **Actividad (4 minutos):** una persona elige patrón para A/B/C y la otra pregunta:
+# **Actividad:** una persona elige patrón para A/B/C y la otra pregunta:
 # “¿Qué evidencia necesitarías para elegir algo más complejo?”. Cambien roles.
 
 # %% [markdown]
-# ## 18–30 · Arquitectura 3: paralelo fijo
+# ## Arquitectura 3: paralelo fijo
 # Inspiración: el equipo de los Cuatro Fantásticos reúne lecturas independientes.
 # Nuestro programa comparará evidencia de Batman y Fantásticos sobre herramientas.
 # No intentamos simular poderes ni razonamientos de los personajes.
@@ -131,7 +130,7 @@ def unir(estado):
 
 
 # %% [markdown]
-# ## 30–40 · La unión es parte del diseño
+# ## La unión es parte del diseño
 # La arista con una **lista de nodos de origen** es una barrera: unir espera ambos.
 # Si cada worker tarda un tiempo independiente t1 y t2, una ejecución ideal paralela
 # se aproxima a max(t1,t2), más coordinación. No prometemos esa mejora en esta demo
@@ -159,9 +158,9 @@ print("Informe conjunto:", informe["sources"])
 # **Punto de reenganche 1:** podés identificar dos ramas, los campos que escriben
 # y la barrera de unión. No dependemos del orden en que terminan.
 #
-# ## 40–45 · Pausa
+# ## Pausa
 #
-# ## 45–55 · Arquitectura 4: orquestador–workers
+# ## Arquitectura 4: orquestador–workers
 # En el paralelo fijo conocíamos las dos tareas. Ahora la entrada trae una lista de
 # colecciones: puede tener una, dos, tres o cuatro. El plan determina cuántos workers
 # se crean. `Send` lleva un estado pequeño a cada tarea.
@@ -198,7 +197,7 @@ class EstadoEquipo(TypedDict, total=False):
 # normalizamos el plan antes de enviarlo. El orden de llegada de workers no es un
 # contrato para la presentación final: ordenamos explícitamente al reunir.
 #
-# ## 55–70 · Construimos el plan, el reparto y la reunión
+# ## Construimos el plan, el reparto y la reunión
 # Cada función tiene una responsabilidad pequeña. El worker recibe query y universe,
 # no toda la conversación ni credenciales. Reducir el contexto facilita probarlo.
 
@@ -247,7 +246,7 @@ print(resultado["summary"])
 # ¿Qué pasaría sin reducer si varios workers escribieran parts? LangGraph detectaría
 # actualizaciones incompatibles en la misma clave; no debemos ocultarlo con un try genérico.
 #
-# ## 70–80 · Arquitectura 5: agente con herramientas
+# ## Arquitectura 5: agente con herramientas
 # Ahora cambia quién decide: el modelo propone acciones, observa resultados y decide
 # si ya puede responder. El grafo controla el bucle y sus límites.
 #
@@ -281,9 +280,9 @@ print("Respuesta final:", estado_agente["messages"][-1].content)
 # **Punto de reenganche 2:** compará una arista fija con la decisión de llamar una
 # herramienta. Si todos los pasos fueran conocidos, ¿qué costo extra agrega un agente?
 #
-# ## 80–85 · Pausa
+# ## Pausa
 #
-# ## 85–100 · Taller: el equipo prepara una actividad y su música
+# ## Taller: el equipo prepara una actividad y su música
 # Agregá canciones al plan de cooperación sin crear un nodo nuevo.
 #
 # 1. Anticipá cuántos workers se crearán para fantástico + chavo + canciones.
@@ -307,7 +306,7 @@ mi_equipo = app_equipo.invoke(mi_plan)
 print(mi_equipo["summary"])
 
 # %% [markdown]
-# ## 100–112 · Solución y crítica de arquitectura
+# ## Solución y crítica de arquitectura
 # El conjunto de dominios y el conteo permiten detectar pérdida o duplicación. La
 # síntesis no debe transformar una lista vacía en una afirmación inventada.
 # Comparamos una solución completa con tu variante. Las cuatro entradas de la lista
@@ -350,10 +349,10 @@ except ValueError:
 # Hoy los comparamos en diseño, no afirmamos haber implementado un supervisor o un
 # handoff conversacional completo. Orquestar workers con un plan es otra decisión.
 #
-# **Discusión de 5 minutos:** si solo queremos dos IDs, no necesitamos un supervisor.
+# **Discusión:** si solo queremos dos IDs, no necesitamos un supervisor.
 # ¿Qué requisito nuevo justificaría agregarlo? Escribí el requisito antes del patrón.
 #
-# ## 112–120 · Ticket de salida
+# ## Ticket de salida
 # Elegí una arquitectura para “comparar evidencia de tres colecciones y recomendar
 # una canción”. Dibujá dónde viaja el estado, qué se ejecuta simultáneamente y quién
 # une resultados. Nombrá un caso de error y cómo lo probarías.

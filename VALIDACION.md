@@ -2,8 +2,15 @@
 
 Última comprobación: **30 de septiembre de 2026**. Se ejecutaron los cuatro
 notebooks ampliados y sus scripts equivalentes. Cada
-notebook contiene una agenda de 120 minutos con dos pausas, explicación, construcción
+notebook contiene un recorrido con dos pausas, explicación, construcción
 por etapas, predicciones, un taller, soluciones y un ticket de salida.
+
+Después de estas ejecuciones se realizó una edición de presentación para retirar
+los cronogramas y las duraciones visibles, sin cambiar las celdas de código.
+Se comprobó que cada celda de código y la estructura ejecutable de los scripts
+son idénticas a las de la versión probada. Scripts y notebooks siguen sincronizados
+y Ruff pasa. No se repitieron llamadas API por esta edición de Markdown; los reportes
+anteriores conservan las huellas de los archivos antes de este cambio de presentación.
 
 ## Resultados ejecutados
 
@@ -17,7 +24,7 @@ por etapas, predicciones, un taller, soluciones y un ticket de salida.
 | Notebooks live con OpenAI, kernels nuevos | 4 de 4 aprobados |
 | Catálogo, golden dataset offline | 10 de 10 casos correctos |
 | Catálogo, golden dataset live | 10 de 10 casos correctos |
-| Consistencia de materiales | Scripts/notebooks sincronizados; fuentes ejecutadas coinciden |
+| Consistencia de materiales | Scripts/notebooks sincronizados; código idéntico al ejecutado |
 | Instalación limpia, sin .env ni entorno anterior | uv sync --locked --offline; 84 tests y 8 recorridos offline aprobados |
 | Archivos publicables | 41 archivos revisados; sin claves detectadas; 4 notebooks sin outputs |
 
@@ -98,6 +105,6 @@ ni despliegue de un servicio. No se reintrodujo un servicio externo de trazas.
 
 Los notebooks tienen 28, 29, 22 y 29 celdas respectivamente, con explicación y
 código intercalados. La ejecución automatizada valida funcionamiento, no demuestra
-que el aprendizaje ocupe exactamente dos horas para todas las personas.
-Las agendas contemplan actividad, discusión y pausas; el docente debe observar
+por sí sola la comprensión del grupo.
+El recorrido contempla actividad, discusión y pausas; el docente debe observar
 la primera cohorte y ajustar variantes conservando objetivos, pausas y cierre.

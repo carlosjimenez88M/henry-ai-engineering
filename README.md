@@ -1,8 +1,8 @@
 # Henry · Módulo 3 · AI Engineering aplicado con LangGraph
 
-**Cuatro notebooks, cada uno una clase completa de 120 minutos.** Ocho horas en total.
+**Cuatro notebooks, cada uno una clase completa.**
 Cada notebook contiene la explicación, el código por etapas, preguntas de predicción,
-experimentos, dos pausas de cinco minutos, un taller, soluciones y un ticket de salida.
+experimentos, dos pausas, un taller, soluciones y un ticket de salida.
 El script Python equivalente permite reproducir el mismo recorrido.
 
 Construimos un archivo cultural con escenarios inventados de Batman, los Cuatro
@@ -20,9 +20,8 @@ obras. No se incluyen letras, audio, páginas de cómics ni episodios originales
 
 **Profundidad con acompañamiento:** no se pide escribir todo desde cero ni memorizar
 APIs. Cada bloque exige una predicción, una modificación o una comprobación. El
-material incluye lo necesario para explicar cada paso, sin requerir que el docente
-improvise contenido externo para llenar las dos horas. Las agendas detalladas están
-dentro de cada notebook y suman 120 minutos, incluidas pausas y cierre.
+material incluye lo necesario para explicar cada paso. Cada notebook guía el recorrido
+completo, desde el problema inicial hasta la práctica, las pausas y el cierre.
 
 ## Qué arquitecturas se trabajan
 
@@ -125,6 +124,6 @@ oral, escrita o diagramas y no premia rapidez.
 Los checkpoints de la demo viven en memoria: no sobreviven reinicios. Las aprobaciones
 son simuladas y no producen acciones externas. Validar IDs no demuestra fidelidad
 semántica completa. Autenticación, persistencia durable y despliegue quedan fuera
-de estas ocho horas.
+del alcance de estas clases.
 
 [Guía docente](docs/GUIA_DOCENTE.md) · [Fuentes y cambios](docs/FUENTES_Y_CAMBIOS.md)

@@ -1,27 +1,26 @@
 # %% [markdown]
 # # Clase 2 · Un investigador que muestra sus fuentes: RAG y primeros grafos
 #
-# **Duración: 120 minutos, incluidas dos pausas.**
 # Hoy construiremos un flujo que busca, responde y decide cuándo abstenerse. La
 # profundidad está en separar responsabilidades y explicar cada transición.
 #
 # **Producto:** dos versiones del mismo sistema: una secuencia y un grafo con una
 # rama de abstención. Vas a comparar qué cambia y por qué.
 #
-# | Minutos | Trabajo y producto observable |
-# |---|---|
-# | 0–8 | Recuperar el contrato de la herramienta y reconocer un límite |
-# | 8–18 | Separar búsqueda, contexto y generación con una ficha de Batman |
-# | 18–30 | Crear una respuesta y examinar el prompt y la salida estructurada |
-# | 30–40 | Encontrar una referencia inventada y proponer una validación |
-# | 40–45 | Pausa |
-# | 45–55 | Estado y nodos: seguir los datos de una solicitud |
-# | 55–70 | Construir la secuencia buscar → responder con StateGraph |
-# | 70–80 | Agregar una decisión y una salida sin evidencia |
-# | 80–85 | Pausa |
-# | 85–100 | Taller: cambiar colección y comprobar ambas rutas |
-# | 100–112 | Comparar soluciones, inspeccionar streaming y diagnosticar una falla |
-# | 112–120 | Justificar cuándo basta un workflow |
+# **Recorrido de la clase**
+#
+# - Recuperar el contrato de la herramienta y reconocer un límite
+# - Separar búsqueda, contexto y generación con una ficha de Batman
+# - Crear una respuesta y examinar el prompt y la salida estructurada
+# - Encontrar una referencia inventada y proponer una validación
+# - Pausa
+# - Estado y nodos: seguir los datos de una solicitud
+# - Construir la secuencia buscar → responder con StateGraph
+# - Agregar una decisión y una salida sin evidencia
+# - Pausa
+# - Taller: cambiar colección y comprobar ambas rutas
+# - Comparar soluciones, inspeccionar streaming y diagnosticar una falla
+# - Justificar cuándo basta un workflow
 #
 # **Cómo trabajar:** anticipá una salida, ejecutá una celda, observá y explicá.
 # La persona que ejecuta y la que revisa intercambian roles durante el reto.
@@ -39,7 +38,7 @@
 # hacer toda la práctica offline; el docente demuestra live. No compartas el .env.
 
 # %% [markdown]
-# ## 0–8 · Recordamos con una predicción
+# ## Recordamos con una predicción
 # Si buscar_archivo devuelve hits=[], ¿qué información puede usar el modelo?
 # No tiene evidencia de nuestro catálogo. “Preguntarle otra vez” no crea fuentes.
 # Elegí qué probarías primero: la búsqueda, el tono del prompt o el color del diagrama.
@@ -56,7 +55,7 @@ print("Modo:", MODE)
 print("Recuperado:", [h.id for h in evidencia.hits])
 
 # %% [markdown]
-# ## 8–18 · ¿Qué significa RAG en este ejemplo?
+# ## ¿Qué significa RAG en este ejemplo?
 # Retrieval-Augmented Generation es generación apoyada en información recuperada.
 # En nuestro caso:
 #
@@ -76,7 +75,7 @@ for ficha in evidencia.hits:
     print("Evidencia:", ficha.text)
 
 # %% [markdown]
-# ## 18–30 · LangChain organiza interfaces, no garantiza verdad
+# ## LangChain organiza interfaces, no garantiza verdad
 # Usamos componentes para separar responsabilidades. Una herramienta recupera datos;
 # un prompt los organiza; el modelo genera; un schema describe la salida esperada.
 #
@@ -127,7 +126,7 @@ parece_valida = GroundedAnswer(text="Una afirmación que no revisamos", source_i
 print("Pydantic acepta la forma:", parece_valida.model_dump())
 
 # %% [markdown]
-# ## 30–40 · Validar no es mirar si “suena bien”
+# ## Validar no es mirar si “suena bien”
 # Vamos a comparar las referencias citadas con los IDs realmente recuperados.
 # Un conjunto, set, permite comprobar inclusión sin depender del orden.
 #
@@ -156,9 +155,9 @@ print("Referencias de la respuesta real: válidas.")
 # **Punto de reenganche 1:** podés nombrar búsqueda, contexto y respuesta, y mostrar
 # un caso que Pydantic acepta pero nuestra validación rechaza.
 #
-# ## 40–45 · Pausa
+# ## Pausa
 #
-# ## 45–55 · LangGraph: datos que viajan y pasos que los actualizan
+# ## LangGraph: datos que viajan y pasos que los actualizan
 # Un grafo no es el dibujo solamente. Define qué nodos corren y cómo se combina
 # lo que devuelven. El estado conserva datos de una ejecución; cada nodo devuelve
 # actualizaciones parciales. No necesita reconstruir todo el diccionario.
@@ -207,7 +206,7 @@ actualizacion = nodo_buscar({"query": consulta, "universe": "batman"})
 print("Campos que devuelve buscar:", list(actualizacion))
 
 # %% [markdown]
-# ## 55–70 · Arquitectura 1: secuencia
+# ## Arquitectura 1: secuencia
 # Una secuencia conviene cuando el orden es conocido. Siempre buscamos y después
 # respondemos. Es sencilla de explicar y probar, pero no elige otro camino por sí sola.
 # LangGraph también sirve para workflows deterministas: usarlo no vuelve autónomo al sistema.
@@ -233,11 +232,11 @@ assert resultado["sources"]
 print(resultado["answer"])
 
 # %% [markdown]
-# **Modificación guiada (5 minutos):** cambien la colección a canciones y busquen
+# **Modificación guiada:** cambien la colección a canciones y busquen
 # investigación. Antes de ejecutar, escriban qué ID esperan y qué debería permanecer
 # igual en el grafo. Cambiar datos no requiere reconstruir la arquitectura.
 #
-# ## 70–80 · Arquitectura 2: routing condicional
+# ## Arquitectura 2: routing condicional
 # Agregamos una pregunta al flujo: ¿hay evidencia? La respuesta determina el destino.
 # Una arista condicional devuelve un **nombre de ruta**, no el texto final del usuario.
 #
@@ -293,9 +292,9 @@ print("Colección conocida, tema ausente:", tema_ausente["status"])
 # **Punto de reenganche 2:** podés seguir ambas ramas con el dedo y explicar por
 # qué la rama vacía no necesita una llamada al modelo.
 #
-# ## 80–85 · Pausa
+# ## Pausa
 #
-# ## 85–100 · Taller: investigador de la vecindad
+# ## Taller: investigador de la vecindad
 # La aplicación debe responder consultas de la colección chavo y abstenerse cuando
 # no encuentre evidencia. No cambies la topología: cambiá datos y comprobaciones.
 #
@@ -315,7 +314,7 @@ print("Estado:", mi_resultado["status"])
 print("Fuentes:", mi_resultado["sources"])
 
 # %% [markdown]
-# ## 100–112 · Solución, streaming y diagnóstico
+# ## Solución, streaming y diagnóstico
 # Streaming de updates muestra qué cambió cada nodo. No es streaming de tokens.
 # Para observar el flujo sin más llamadas pagadas, seguiremos la ruta sin evidencia.
 # No hace falta una plataforma remota para entender el recorrido.
@@ -339,7 +338,7 @@ for paso in pasos:
 # la secuencia podría bastar. Si necesitamos un comportamiento distinto al faltar
 # información, el routing hace esa decisión visible y comprobable.
 #
-# ## 112–120 · Ticket de salida
+# ## Ticket de salida
 # Entregá el diagrama de ambas arquitecturas y explicá:
 # - ¿Qué campos añade buscar? ¿Qué campos añade responder?
 # - ¿Qué condición decide la ruta?

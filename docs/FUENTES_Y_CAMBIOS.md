@@ -15,9 +15,9 @@ de helpers y ofrecía pocas decisiones de diseño. La versión actual conserva
 instrucciones cortas y pausas, y añade construcción progresiva, contraste de
 arquitecturas, fallas controladas, criterios de evaluación y soluciones explicadas.
 
-Cada notebook suma 120 minutos de actividad prevista. No se confunde esa duración
-con el tiempo que tarda en ejecutar su código. La guía recomienda observar una
-primera cohorte y ajustar ejercicios con feedback, sin eliminar pausas ni cierre.
+Cada notebook desarrolla un recorrido completo de aprendizaje. La guía recomienda
+observar una primera cohorte y ajustar ejercicios con feedback, sin eliminar pausas
+ni cierre. Ejecutar el código verifica funcionamiento, no demuestra comprensión.
 
 ## Corpus y ejemplos
 

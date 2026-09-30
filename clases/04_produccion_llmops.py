@@ -1,27 +1,26 @@
 # %% [markdown]
 # # Clase 4 · Revisar antes de entregar: ciclos, aprobación humana y evaluación
 #
-# **Duración: 120 minutos, incluidas dos pausas.**
 # El sistema ya busca y coordina tareas. Ahora debe reconocer fallas, intentar una
 # corrección acotada y dejar una propuesta lista para que una persona la revise.
 #
 # **Producto:** un ciclo de revisión, una aprobación/rechazo reanudable y un reporte
 # local. No publicamos nada ni conectamos servicios externos de observabilidad.
 #
-# | Minutos | Trabajo y producto observable |
-# |---|---|
-# | 0–8 | Detectar una respuesta con fuente inventada |
-# | 8–18 | Definir qué significa “aprobada por el evaluador” |
-# | 18–30 | Construir borrador y evaluación separados |
-# | 30–40 | Cerrar el ciclo con límite y observar una corrección |
-# | 40–45 | Pausa |
-# | 45–55 | Distinguir checkpoint de memoria durable |
-# | 55–70 | Interrumpir, inspeccionar y reanudar con una decisión humana |
-# | 70–80 | Probar rechazo y aislamiento de solicitudes |
-# | 80–85 | Pausa |
-# | 85–100 | Taller: diseñar y ejecutar casos de evaluación |
-# | 100–112 | Diagnosticar una regresión y guardar evidencia |
-# | 112–120 | Defender el proyecto final y sus límites |
+# **Recorrido de la clase**
+#
+# - Detectar una respuesta con fuente inventada
+# - Definir qué significa “aprobada por el evaluador”
+# - Construir borrador y evaluación separados
+# - Cerrar el ciclo con límite y observar una corrección
+# - Pausa
+# - Distinguir checkpoint de memoria durable
+# - Interrumpir, inspeccionar y reanudar con una decisión humana
+# - Probar rechazo y aislamiento de solicitudes
+# - Pausa
+# - Taller: diseñar y ejecutar casos de evaluación
+# - Diagnosticar una regresión y guardar evidencia
+# - Defender el proyecto final y sus límites
 #
 # **Cómo trabajar:** anticipá una salida, ejecutá una celda, observá y explicá.
 # La persona que ejecuta y la que revisa intercambian roles durante el reto.
@@ -39,7 +38,7 @@
 # hacer toda la práctica offline; el docente demuestra live. No compartas el .env.
 
 # %% [markdown]
-# ## 0–8 · El error que una respuesta bonita puede esconder
+# ## El error que una respuesta bonita puede esconder
 # Una respuesta dice que una ficha inexistente respalda su conclusión. El texto es
 # fluido, el JSON es válido y el programa terminó sin excepciones. ¿Está listo?
 # La pregunta correcta es qué contrato falló y dónde lo podemos observar.
@@ -55,7 +54,7 @@ print("Disponibles:", [h.id for h in fichas.hits])
 print("Citadas:", borrador_roto["source_ids"])
 
 # %% [markdown]
-# ## 8–18 · Arquitectura 6: evaluador–optimizador
+# ## Arquitectura 6: evaluador–optimizador
 # Separamos producir un borrador de evaluar un criterio. Si falla, podemos corregir
 # con un límite. Un loop sin criterio verificable puede consumir recursos sin mejorar.
 #
@@ -85,7 +84,7 @@ assert not ids_validos(borrador_roto, fichas.model_dump())
 print("El evaluador detecta la referencia inventada.")
 
 # %% [markdown]
-# ## 18–30 · Producir y evaluar son nodos distintos
+# ## Producir y evaluar son nodos distintos
 # Nuestro estado conservará evidence, draft, attempts y valid. Conservar la evidencia
 # original permite revisar el borrador sin volver a buscar en cada iteración.
 #
@@ -143,7 +142,7 @@ def decidir(estado):
 # evidencia o después del límite; solo entonces corrige. Reintentar no es siempre
 # la acción adecuada. Si falta información, repetir el prompt no la crea.
 #
-# ## 30–40 · Conectamos el ciclo y observamos dos intentos
+# ## Conectamos el ciclo y observamos dos intentos
 # La escalación elimina el borrador inválido de la salida destinada al usuario.
 # No lo entregamos como si fuera correcto simplemente porque agotamos los intentos.
 
@@ -206,9 +205,9 @@ print("Sin intentos disponibles:", agotado["decision"])
 # que obliga a terminar. MAX_INTENTOS es un límite de nuestra lógica; recursion_limit
 # protege los pasos del grafo. Ninguno equivale a un presupuesto monetario.
 #
-# ## 40–45 · Pausa
+# ## Pausa
 #
-# ## 45–55 · Una persona revisa la propuesta
+# ## Una persona revisa la propuesta
 # Inspiración: Alfred revisa el equipo propuesto antes de una salida. En esta demo
 # solo revisamos una respuesta: no publicamos, compramos ni enviamos nada.
 #
@@ -237,7 +236,7 @@ def revisar_con_persona(estado):
 
 
 # %% [markdown]
-# ## 55–70 · Pausar no es bloquear el teclado
+# ## Pausar no es bloquear el teclado
 # Construimos un grafo pequeño para aislar la revisión. Recibe el borrador listo de
 # la etapa anterior. Separar esta demo facilita entender el checkpoint antes de
 # combinarlo con el ciclo completo.
@@ -267,7 +266,7 @@ assert app_humana.get_state(config).next == ()
 print("Decisión guardada:", aprobado["decision"])
 
 # %% [markdown]
-# ## 70–80 · Probar el rechazo es obligatorio
+# ## Probar el rechazo es obligatorio
 # Una segunda solicitud usa otro thread_id. Rechazarla no debe cambiar la aprobación
 # anterior. No confundimos la cadena "reject" con True por ser texto no vacío.
 # Primero enviamos "tal vez", que no es una opción permitida. La solicitud vuelve a
@@ -290,9 +289,9 @@ print("Solicitudes aisladas: una aprobada y otra rechazada.")
 # **Punto de reenganche 2:** podés explicar para qué sirve el mismo thread_id al
 # reanudar y por qué una nueva solicitud necesita otro identificador.
 #
-# ## 80–85 · Pausa
+# ## Pausa
 #
-# ## 85–100 · Taller: diseñar pruebas antes de cambiar el prompt
+# ## Taller: diseñar pruebas antes de cambiar el prompt
 # Una tabla de casos es un contrato de comportamiento. No basta con las preguntas
 # que sabemos que funcionan. El conjunto necesita filtros, acentos y falta de evidencia.
 #
@@ -342,7 +341,7 @@ def evaluar_casos(casos):
 mi_reporte = evaluar_casos(mis_casos)
 
 # %% [markdown]
-# ## 100–112 · Solución, regresión y evidencia local
+# ## Solución, regresión y evidencia local
 # El reporte mide coincidencia exacta de IDs en estos casos. No mide comprensión
 # universal ni calidad de cada frase. La latencia es local; no incluye un LLM porque
 # este conjunto está evaluando la herramienta.
@@ -397,8 +396,8 @@ ruta.write_text(
 print("Reporte guardado:", ruta.name)
 
 # %% [markdown]
-# ## 112–120 · Defensa del proyecto
-# Prepará una explicación de dos minutos con evidencia visible:
+# ## Defensa del proyecto
+# Prepará una explicación breve con evidencia visible:
 # 1. El contrato de tu herramienta y un argumento inválido que rechace.
 # 2. La arquitectura elegida y una alternativa que descartaste con una razón.
 # 3. Una fuente real del catálogo y una consulta sin evidencia.

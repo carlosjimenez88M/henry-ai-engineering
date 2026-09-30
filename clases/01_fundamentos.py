@@ -1,7 +1,6 @@
 # %% [markdown]
 # # Clase 1 · El archivo de la Baticueva: construir una herramienta confiable
 #
-# **Duración total: 120 minutos, incluidas dos pausas.**
 # Al terminar vas a poder diseñar el contrato de una herramienta, validar una consulta,
 # buscar evidencia con filtros y explicar quién decide y quién ejecuta una llamada.
 #
@@ -12,20 +11,20 @@
 # Una herramienta potente no es una función que hace cualquier cosa. Es una capacidad
 # bien delimitada, reutilizable y fácil de comprobar. Hoy construimos esa capacidad.
 #
-# | Minutos | Trabajo y producto observable |
-# |---|---|
-# | 0–8 | Distinguir respuesta inventada de evidencia; escribir una predicción |
-# | 8–18 | Ver la herramienta terminada; identificar entrada, salida y límites |
-# | 18–30 | Construir una búsqueda mínima; explicar un bucle y una coincidencia |
-# | 30–40 | Modificar el filtro y detectar un falso positivo |
-# | 40–45 | Pausa |
-# | 45–55 | Definir un contrato con tipos y validación |
-# | 55–70 | Recorrer filtros, ranking y resultados; comprobar invariantes |
-# | 70–80 | Exponer la función como herramienta y observar un tool call |
-# | 80–85 | Pausa |
-# | 85–100 | Reto: una recomendación musical con evidencia |
-# | 100–112 | Comparar solución y probar tres fallas |
-# | 112–120 | Ticket de salida y decisión de diseño |
+# **Recorrido de la clase**
+#
+# - Distinguir respuesta inventada de evidencia; escribir una predicción
+# - Ver la herramienta terminada; identificar entrada, salida y límites
+# - Construir una búsqueda mínima; explicar un bucle y una coincidencia
+# - Modificar el filtro y detectar un falso positivo
+# - Pausa
+# - Definir un contrato con tipos y validación
+# - Recorrer filtros, ranking y resultados; comprobar invariantes
+# - Exponer la función como herramienta y observar un tool call
+# - Pausa
+# - Reto: una recomendación musical con evidencia
+# - Comparar solución y probar tres fallas
+# - Ticket de salida y decisión de diseño
 #
 # **Cómo trabajar:** anticipá una salida, ejecutá una celda, observá y explicá.
 # La persona que ejecuta y la que revisa intercambian roles durante el reto.
@@ -43,7 +42,7 @@
 # hacer toda la práctica offline; el docente demuestra live. No compartas el .env.
 
 # %% [markdown]
-# ## 0–8 · Problema antes de código
+# ## Problema antes de código
 # Una persona pide “la mejor historia de Batman sobre cooperación”. El modelo puede
 # escribir algo convincente, pero nuestro archivo tiene solo doce fichas. La respuesta
 # debe decir qué encontró allí, no fingir haber leído toda una colección comercial.
@@ -61,7 +60,7 @@ catalogo = load_catalog()
 print("Modo:", MODE, "| fichas disponibles:", len(catalogo))
 
 # %% [markdown]
-# ## 8–18 · Primero vemos el contrato en acción
+# ## Primero vemos el contrato en acción
 # Mirá solo tres campos: query es la pregunta; hits son resultados; status informa
 # si hubo evidencia. Cada hit tiene ID, colección, texto y score. Un ID nos permite
 # citar una fuente sin copiar todo el documento.
@@ -81,7 +80,7 @@ print("Fichas examinadas después del filtro:", ejemplo.inspected)
 # predecible el tamaño del contexto. top_k no hace que una respuesta sea correcta.
 # Un score lexical tampoco es “porcentaje de verdad”.
 #
-# ## 18–30 · Una función mínima que sí entendemos
+# ## Una función mínima que sí entendemos
 # Primero trabajamos con diccionarios. Cada ficha es una fila con campos con nombre.
 # `for` recorre filas; `if` decide si conservar una; `append` agrega a una lista.
 # Todavía no usamos modelos ni grafos. Python alcanza para buscar coincidencias.
@@ -111,7 +110,7 @@ print(buscar_minimo("investigacion", catalogo))
 # ¿Por qué aparece una canción al buscar investigación en todo el archivo?
 # La búsqueda encuentra una coincidencia, no sabe qué colección queríamos.
 #
-# ## 30–40 · Modificación y un error que conviene descubrir
+# ## Modificación y un error que conviene descubrir
 # Cambiá solo palabra por "equipo". Anotá si esperás Batman, Fantásticos, Chavo o
 # canciones. Después probá "investigación" con tilde: nuestra primera función no
 # normaliza texto. El comportamiento incorrecto nos indica qué mejorar.
@@ -130,9 +129,9 @@ print("Con tilde:", buscar_minimo("investigación", catalogo))
 # **Punto de reenganche 1:** podés seguir una fila desde entrada hasta resultado y
 # nombrar dos límites de buscar_minimo: no filtra colección ni maneja tildes.
 #
-# ## 40–45 · Pausa
+# ## Pausa
 #
-# ## 45–55 · Diseñar el contrato antes de agregar más poder
+# ## Diseñar el contrato antes de agregar más poder
 # La entrada de una herramienta también es una interfaz. Debe aceptar entradas útiles
 # y rechazar las que no puede manejar. Pydantic nos ayuda a escribir esas reglas.
 #
@@ -182,7 +181,7 @@ except ValidationError:
 # una consulta válida y no tener resultados. Diferenciamos error de entrada de falta
 # de evidencia; no devolvemos el mismo mensaje para todo.
 #
-# ## 55–70 · La tubería de una herramienta potente
+# ## La tubería de una herramienta potente
 # Vamos a recorrer su implementación sin memorizarla:
 #
 # ```text
@@ -217,11 +216,11 @@ assert sin_resultados.hits == []
 print("Filtros, límites y ausencia de evidencia comprobados.")
 
 # %% [markdown]
-# **Parada de discusión (3 minutos):** ¿qué perderíamos si devolvemos solo texto?
+# **Parada de discusión:** ¿qué perderíamos si devolvemos solo texto?
 # Perdemos IDs, criterios del ranking y estado estructurado. ¿Qué riesgo hay si
 # permitimos un top_k gigante? Contexto innecesario, más costo y resultados confusos.
 #
-# ## 70–80 · De función Python a herramienta del modelo
+# ## De función Python a herramienta del modelo
 # El decorador @tool aporta nombre, descripción y esquema. La descripción le dice
 # al modelo cuándo usarla; la validación impone los límites. La función no se vuelve
 # inteligente por tener el decorador.
@@ -287,9 +286,9 @@ print("ID que vincula acción y observación:", mensaje_tool.tool_call_id)
 # **Punto de reenganche 2:** podés señalar la propuesta, la ejecución Python y la
 # observación. Los IDs vinculan mensajes; no son razonamiento privado del modelo.
 #
-# ## 80–85 · Pausa
+# ## Pausa
 #
-# ## 85–100 · Taller: DJ de una historia de detectives
+# ## Taller: DJ de una historia de detectives
 # La persona que escribe configura la herramienta; la otra revisa los resultados.
 # A mitad del bloque cambien roles.
 #
@@ -318,7 +317,7 @@ for ficha in mi_busqueda["hits"]:
     print(ficha["id"], ficha["title"])
 
 # %% [markdown]
-# ## 100–112 · Solución y pruebas de borde
+# ## Solución y pruebas de borde
 # La solución no elige por gusto personal: muestra por qué esa ficha aparece en el
 # archivo. Si faltan pruebas de error, todavía no sabemos si el contrato se respeta.
 # Los errores siguientes son deliberados y se capturan solo en esta demostración.
@@ -340,7 +339,7 @@ for caso in casos_invalidos:
 print("Resultado respaldado:", solucion.hits[0].text)
 
 # %% [markdown]
-# ## 112–120 · Ticket de salida
+# ## Ticket de salida
 # Entregá una entrada válida, una inválida y el ID de una fuente. Explicá:
 # - ¿Qué valida el código y qué decide el modelo?
 # - ¿Qué diferencia hay entre no_results y un error de validación?
