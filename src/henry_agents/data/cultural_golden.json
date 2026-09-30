@@ -1,0 +1,12 @@
+[
+ {"id":"bat-investigation","query":"investigación","universe":"batman","kind":"todos","top_k":3,"expected":["BAT-01","BAT-03"]},
+ {"id":"bat-tools","query":"herramientas","universe":"batman","kind":"todos","top_k":3,"expected":["BAT-02"]},
+ {"id":"fan-team","query":"cooperación","universe":"fantasticos","kind":"todos","top_k":3,"expected":["FAN-01","FAN-03"]},
+ {"id":"chavo-message","query":"recado","universe":"chavo","kind":"todos","top_k":3,"expected":["CHA-02"]},
+ {"id":"music-detective","query":"investigación","universe":"canciones","kind":"cancion","top_k":3,"expected":["MUS-02"]},
+ {"id":"stable-limit","query":"ciencia","universe":"fantasticos","kind":"todos","top_k":1,"expected":["FAN-01"]},
+ {"id":"unknown","query":"vacuna marciana","universe":"todos","kind":"todos","top_k":3,"expected":[]},
+ {"id":"incompatible-filters","query":"investigación","universe":"batman","kind":"cancion","top_k":3,"expected":[]},
+ {"id":"unknown-topic-in-batman","query":"Batman vacuna marciana","universe":"todos","kind":"todos","top_k":3,"expected":[]},
+ {"id":"unknown-topic-in-music","query":"canciones receta de sopa","universe":"todos","kind":"todos","top_k":3,"expected":[]}
+]

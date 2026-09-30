@@ -1,0 +1,20 @@
+name: Clases reproducibles
+on: [push, pull_request]
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.7.8"
+      - run: uv python install 3.13
+      - run: uv sync --locked --python 3.13
+      - run: uv run ruff check src scripts tests clases
+      - run: uv run pytest -q
+      - run: uv run python scripts/verify.py --mode offline
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: execution-reports
+          path: reports/

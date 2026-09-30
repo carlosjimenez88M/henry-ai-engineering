@@ -1,0 +1,8 @@
+[
+ {"id":"it-vpn","domain":"it","text":"VPN: si la conexión VPN se desconecta, reinicia el cliente VPN y verifica tu conexión a Internet. Si persiste, abre un ticket de IT incluyendo el código de error. Nunca compartas tu contraseña."},
+ {"id":"it-password","domain":"it","text":"Contraseña: restablece tu contraseña en el portal de autoservicio usando MFA. IT nunca pide contraseñas por correo ni desactiva MFA mediante el chatbot."},
+ {"id":"hr-payroll","domain":"rrhh","text":"Recibo de sueldo o nómina incorrecto: abre un caso privado con RRHH indicando período y concepto del recibo. No publiques importes personales en canales públicos. RRHH valida el ajuste; el asistente no modifica salarios."},
+ {"id":"hr-vacation","domain":"rrhh","text":"Vacaciones: solicita las vacaciones en el portal de RRHH con al menos 10 días de anticipación. La aprobación corresponde a tu responsable. Esta política es ficticia para el ejercicio."},
+ {"id":"fac-equipment","domain":"facilities","text":"Equipamiento para home office: solicita silla o monitor en el portal de Facilities. Se requiere aprobación humana del responsable antes de autorizar la compra. El asistente solo prepara un borrador, nunca compra."},
+ {"id":"fac-office","domain":"facilities","text":"Oficina: reserva una sala desde el calendario interno. Si la sala tiene un problema de mantenimiento, informa a Facilities indicando número de sala y descripción."}
+]

@@ -1,0 +1,135 @@
+# Credenciales y configuración privada.
+# La única plantilla .env publicable es la de la raíz, sin claves reales.
+# Estas reglas filtran rutas, no el contenido de los archivos ni el historial Git.
+.env
+.env.*
+*.env
+*.env.*
+!/.env.example
+.envrc
+.envrc.*
+.direnv/
+secrets/
+.secrets/
+credentials/
+credentials.json
+credentials-*.json
+credentials.*.json
+credentials.yaml
+credentials.yml
+secrets.json
+secrets.yaml
+secrets.yml
+secrets.toml
+.streamlit/secrets.toml
+client_secret*.json
+service_account*.json
+service-account*.json
+application_default_credentials.json
+token.json
+tokens.json
+.netrc
+.pypirc
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+
+# Entornos virtuales y configuración local de Python.
+.venv/
+.venv-*/
+.venv.*/
+# Los nombres sin punto se limitan a la raíz para no ocultar módulos como src/env/.
+/venv/
+/env/
+/ENV/
+/.python_env/
+__pypackages__/
+
+# Bytecode, cachés, tests y cobertura.
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyre/
+.pytype/
+.hypothesis/
+.tox/
+.nox/
+.cache/
+.uv-cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Construcción y empaquetado: conservar pyproject.toml y uv.lock.
+/build/
+/dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# Jupyter: conservar los notebooks docentes de clases/.
+.ipynb_checkpoints/
+.ipython/
+.jupyter/
+jupyter_runtime/
+
+# Resultados locales (incluye notebooks ejecutados, logs y datos de kernels).
+/reports/*
+!/reports/.gitkeep
+*.log
+*.log.*
+
+# Persistencia local: guardar bases e índices en estas carpetas.
+# No usar *.db/*.sqlite globales: pueden ser datasets o fixtures del curso.
+/.local/
+/data/local/
+/chroma/
+/chroma_db/
+/vectorstore/
+/checkpoints/
+/*.db
+/*.sqlite
+/*.sqlite3
+# Archivos auxiliares de SQLite: son estado de ejecución, no datos de ejemplo.
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite-journal
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite3-journal
+*.sqlite3-shm
+*.sqlite3-wal
+
+# Archivos temporales, respaldos y ajustes personales del editor.
+/tmp/
+/temp/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.bak
+*.orig
+
+# Metadatos de macOS y Windows.
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# No ignorar globalmente .json, .csv ni .ipynb:
+# el corpus, los casos de evaluación y las clases deben versionarse.
+
+# Los notebooks versionados deben guardarse sin outputs.
+# Este archivo no puede filtrar salidas ni claves pegadas dentro del código.

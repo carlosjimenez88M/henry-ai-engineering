@@ -1,0 +1,10 @@
+[
+ {"id":"vpn","query":"La VPN se desconecta constantemente","domains":["it"],"sources":["it-vpn"],"abstain":false},
+ {"id":"payroll","query":"Mi recibo de sueldo está mal","domains":["rrhh"],"sources":["hr-payroll"],"abstain":false},
+ {"id":"equipment","query":"¿Cómo solicito equipamiento para home office?","domains":["facilities"],"sources":["fac-equipment"],"abstain":false},
+ {"id":"mixed","query":"La VPN falla y mi recibo de sueldo está mal","domains":["it","rrhh"],"sources":["it-vpn","hr-payroll"],"abstain":false},
+ {"id":"vacation","query":"¿Cómo solicito vacaciones?","domains":["rrhh"],"sources":["hr-vacation"],"abstain":false},
+ {"id":"unknown","query":"¿Cuál es la capital de Marte?","domains":[],"sources":[],"abstain":true},
+ {"id":"password","query":"¿Cómo restablezco mi contraseña?","domains":["it"],"sources":["it-password"],"abstain":false},
+ {"id":"room","query":"Hay un problema de mantenimiento en una sala de la oficina","domains":["facilities"],"sources":["fac-office"],"abstain":false}
+]
