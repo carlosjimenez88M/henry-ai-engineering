@@ -69,6 +69,7 @@ print("Modo:", MODE, "| fichas disponibles:", len(catalogo))
 # Ejecutá y comprobalo leyendo los IDs. No hace falta memorizar los nombres de campos.
 
 # %%
+
 ejemplo = search_catalog("investigación", universe="batman", top_k=2)
 print("Estado:", ejemplo.status)
 for ficha in ejemplo.hits:
