@@ -16,11 +16,11 @@
 # - Secuencia y su dibujo
 # - Routing: responder o abstenerse; ver los pasos en vivo
 # - ☕ Pausa
-# - ✏️ Tu turno: tu propia regla de routing
+# - ✏️ Tu turno: tu propia regla de routing, conectada a un grafo
 # - Paralelo fijo con barrera de unión
 # - Orquestador con `Send` y reducer
 # - ☕ Pausa
-# - ✏️ Tu turno: sumar canciones al plan
+# - ✏️ Tu turno: diseñar el plan de una actividad
 # - Cierre: proyecto, ticket y glosario
 
 # %% [markdown]
@@ -33,7 +33,7 @@
 # | Estado | Un diccionario que viaja entre pasos, con campos declarados |
 # | Dibujo | El grafo se dibuja solo: ves la arquitectura |
 # | Streaming | Puedes mirar cada paso mientras ocurre |
-# | Checkpoints | Puedes pausar y continuar (clase 6) |
+# | Checkpoints | Guardar el estado para recordar (clase 4) o pausar y continuar (clase 6) |
 #
 # Un **grafo** tiene **nodos** (pasos) y **aristas** (flechas: qué paso sigue).
 # Ojo: todo lo de hoy son *workflows*: el código decide el camino, no un modelo.
@@ -121,8 +121,9 @@ confirmar(resultado["query"] == "investigación", "La pregunta debía conservars
 mostrar_grafo(app_secuencial)
 
 # %% [markdown]
-# 🔍 **Observa:** el dibujo coincide con las aristas que escribiste. Con Internet ves una
-# imagen; sin Internet, un dibujo en texto. Ambos dicen lo mismo.
+# 🔍 **Observa:** el dibujo coincide con las aristas que escribiste. `__start__` y `__end__`
+# son los nombres internos de `START` y `END`: la entrada y la salida del grafo. Con Internet
+# ves una imagen; sin Internet, un dibujo en texto. Ambos dicen lo mismo.
 
 # %% [markdown]
 # ## Routing: responder o abstenerse
@@ -191,7 +192,7 @@ if MODE == "offline":
 # - `"advertir"` si hay exactamente una;
 # - `"responder"` si hay dos o más.
 #
-# Pista: `len(estado["evidence"]["hits"])` cuenta las fichas.
+# `len(estado["evidence"]["hits"])` cuenta las fichas. Después vas a conectar tu regla a un grafo.
 
 
 # %%
@@ -205,11 +206,46 @@ def prueba(n):
     return mi_ruta({"evidence": {"hits": [{}] * n}})
 
 
+mis_rutas = {0: prueba(0), 1: prueba(1), 3: prueba(3)}
 comprobar(
-    [prueba(0), prueba(1), prueba(3)] == ["abstenerse", "advertir", "responder"],
+    mis_rutas == {0: "abstenerse", 1: "advertir", 3: "responder"},
     "Tu regla cubre los tres casos.",
-    "Revisa el orden: primero 0 fichas, luego exactamente 1, y si no, responder.",
+    f"Con 0, 1 y 3 fichas tu función devolvió {mis_rutas}. ¿Cuál no coincide con la consigna "
+    "(revisa también la ortografía exacta del texto)?",
 )
+
+# %% [markdown]
+# Ahora tu regla decide en un grafo de verdad. Agregamos un nodo `advertir` que responde,
+# pero avisando que la evidencia es escasa.
+#
+# 🔮 **Predice:** "cooperación" en chavo trae una sola ficha. ¿Qué nodos se ejecutan?
+
+
+# %%
+def nodo_advertir(estado):
+    respuesta = nodo_responder(estado)
+    return {**respuesta, "answer": "⚠️ Evidencia escasa (una ficha). " + respuesta["answer"], "status": "warned"}
+
+
+if mis_rutas == {0: "abstenerse", 1: "advertir", 3: "responder"}:
+    con_aviso = StateGraph(EstadoRAG)
+    for nombre_nodo, funcion in [
+        ("buscar", nodo_buscar),
+        ("responder", nodo_responder),
+        ("advertir", nodo_advertir),
+        ("abstenerse", nodo_abstenerse),
+    ]:
+        con_aviso.add_node(nombre_nodo, funcion)
+    con_aviso.add_edge(START, "buscar")
+    con_aviso.add_conditional_edges("buscar", mi_ruta, ["responder", "advertir", "abstenerse"])
+    for final in ["responder", "advertir", "abstenerse"]:
+        con_aviso.add_edge(final, END)
+    app_con_aviso = con_aviso.compile()
+    recorrido = [list(p)[0] for p in app_con_aviso.stream({"query": "cooperación", "universe": "chavo"}, stream_mode="updates")]
+    print("Recorrido:", recorrido)
+    comprobar(recorrido == ["buscar", "advertir"], "Una sola ficha llevó a advertir.", "¿Cuántas fichas trajo la búsqueda?")
+else:
+    print("🔁 Completa mi_ruta para conectarla al grafo.")
 
 # %%
 ver_solucion("03_ruta_advertir")
@@ -277,7 +313,8 @@ mostrar_grafo(app_paralela)
 # ```text
 # START → planificar → Send(worker) × N → reunir → END
 # ```
-#
+
+# %% [markdown]
 # Problema: todos los workers escriben en el **mismo** campo `parts`. Un **reducer** (la
 # regla que dice cómo juntar dos escrituras en el mismo campo) lo resuelve.
 #
@@ -311,8 +348,11 @@ PERMITIDAS = {"batman", "fantasticos", "chavo", "canciones"}
 
 def planificar(estado):
     pedidas = estado["universes"]
-    if not pedidas or not set(pedidas) <= PERMITIDAS:
-        raise ValueError("Plan vacío o colección desconocida")
+    if not pedidas:
+        raise ValueError("El plan está vacío")
+    desconocidas = sorted(set(pedidas) - PERMITIDAS)
+    if desconocidas:
+        raise ValueError(f"Colecciones desconocidas: {desconocidas}. Usa: {sorted(PERMITIDAS)}")
     return {"universes": sorted(set(pedidas))}
 
 
@@ -365,32 +405,45 @@ except ValueError as error:
 # ## ☕ Pausa
 
 # %% [markdown]
-# ## ✏️ Tu turno 2 · Sumar canciones al plan
-# Completa la lista `universes` para consultar **fantasticos, chavo y canciones** sobre
-# cooperación. Sin crear nodos nuevos: solo cambia el plan.
-# 🔮 Antes de ejecutar: ¿cuántas partes tendrá `parts`?
+# ## ✏️ Tu turno 2 · Diseña el plan de una actividad
+# El Centro Cultural quiere una actividad de **cooperación** con música. Arma un plan con
+# **todas** las colecciones que tengan algo sobre cooperación, y **ninguna** que vuelva vacía
+# (cada worker vacío es una búsqueda desperdiciada).
+#
+# Cómo hacerlo: prueba primero con las cuatro colecciones, mira el resumen y quita las que
+# devuelvan `[]`. Escribe los nombres en minúscula y sin tilde, como en `PERMITIDAS`.
+# 🔮 Antes: ¿cuántas partes crees que quedarán?
 
 # %%
 mi_plan = {
     "query": "cooperación",
-    "universes": None,  # ✏️ completa aquí: una lista con tres colecciones
+    "universes": None,  # ✏️ completa aquí: la lista de colecciones de tu plan
     "parts": [],
 }
+mi_prediccion_partes = None  # ✏️ completa aquí: cuántas partes esperas
 
 # %%
+from henry_agents.practica import revisar
+
+mi_resultado = {"parts": []}
+if mi_plan["universes"] is not None:
+    try:
+        mi_resultado = app_equipo.invoke(mi_plan)
+        print(mi_resultado["summary"])
+    except ValueError as error:
+        print("⛔ El plan fue rechazado antes de crear tareas:", error)
+vacias = [p["universe"] for p in mi_resultado["parts"] if not p["ids"]]
+if vacias:
+    print(f"🔁 Estas colecciones volvieron vacías: {vacias}. ¿Hacen falta en el plan?")
 if mi_plan["universes"] is None:
-    mi_resultado = {"parts": []}
+    print("🔁 Completa mi_plan['universes'] con una lista de colecciones.")
 else:
-    mi_resultado = app_equipo.invoke(mi_plan)
-    print(mi_resultado["summary"])
-comprobar(
-    {p["universe"] for p in mi_resultado["parts"]} == {"fantasticos", "chavo", "canciones"},
-    "Tres colecciones, tres workers, sin tocar la topología.",
-    'Usa ["fantasticos", "chavo", "canciones"] como lista de universes.',
-)
+    revisar("03_plan_cooperacion", sorted({p["universe"] for p in mi_resultado["parts"]}))
+if mi_prediccion_partes is not None and mi_resultado["parts"]:
+    print(f"Predijiste {mi_prediccion_partes} partes; hubo {len(mi_resultado['parts'])}.")
 
 # %%
-ver_solucion("03_plan_canciones")
+ver_solucion("03_plan_cooperacion")
 
 # %% [markdown]
 # ## 🧱 Proyecto · Paso 3: el flujo fijo del asistente
@@ -399,14 +452,16 @@ ver_solucion("03_plan_canciones")
 # 2. Dibújalo con `mostrar_grafo`.
 # 3. Prueba las dos rutas con `stream_mode="updates"`: una pregunta con evidencia y otra sin.
 #
-# **Evidencia que guardas:** el grafo dibujado y las dos rutas probadas.
+# **Evidencia que guardas** (en tu copia de `proyectos/asistente_archivo/mi_entrega.md`, sección
+# Paso 3): el grafo dibujado y las dos rutas probadas.
 
 # %% [markdown]
 # ## 🎟️ Ticket de salida
 # 1. ¿Qué devuelve un nodo: el estado completo o solo lo que cambia?
 # 2. ¿Por qué cada rama del paralelo escribe en un campo distinto?
 # 3. ¿Qué problema resuelve el reducer cuando varios workers escriben `parts`?
-#
+
+# %% [markdown]
 # ## 📖 Glosario de hoy
 # | Término | En una frase |
 # |---|---|
@@ -418,7 +473,8 @@ ver_solucion("03_plan_canciones")
 # | Barrera de unión | Nodo que espera a varias ramas antes de seguir |
 # | `Send` | Crea una tarea con su propio estado pequeño, una por elemento del plan |
 # | Reducer | Regla para juntar varias escrituras en el mismo campo |
-#
+
+# %% [markdown]
 # ## Límites de lo que hicimos
 # - El código decide todos los caminos: todavía no hay un agente que elija (clase 4).
 # - En una demo local el paralelo no se nota más rápido: el beneficio aparece con pasos lentos,

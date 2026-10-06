@@ -4,7 +4,7 @@
 # ¿Cómo sabes que tu asistente funciona, y quién decide antes de entregar?
 #
 # **Vas a construir:**
-# - Un ciclo que revisa su propio borrador, lo corrige con un límite y escala si no puede.
+# - Un ciclo que revisa su propio borrador, se corrige con la crítica recibida y escala si no puede.
 # - Una pausa para que una persona apruebe o rechace, y que se puede retomar.
 # - Un reporte de evaluación con casos, un juez y el costo medido.
 #
@@ -12,7 +12,7 @@
 #
 # **Recorrido:**
 # - Un error que una respuesta bonita puede esconder
-# - Evaluador–optimizador en LangGraph: redactar, evaluar, corregir o escalar
+# - Evaluador–optimizador en LangGraph: redactar, evaluar, corregir con la crítica o escalar
 # - ☕ Pausa
 # - Pausar el grafo para una persona: checkpoint, `thread_id`, aprobar y rechazar
 # - Medir con casos: coincidencia exacta y abstención
@@ -31,32 +31,39 @@
 # %%
 from henry_agents.config import ROOT, configure, medir_costo
 from henry_agents.cultural import SearchResult, compose, load_catalog, search_catalog
-from henry_agents.practica import comprobar, confirmar, ver_solucion
+from henry_agents.practica import comprobar, confirmar, revisar, ver_solucion
 
 MODE = configure()
 evidencia = search_catalog("herramientas", universe="batman", top_k=1)
-borrador_roto = {"text": "Un informe impecable.", "source_ids": ["INVENTADA"]}
+borrador_roto = {"text": "Un informe impecable.", "source_ids": ["BAT-02", "BAT-99"]}
 print("Modo:", MODE)
 print("Fichas recuperadas:", [h.id for h in evidencia.hits])
 print("Fichas citadas:", borrador_roto["source_ids"])
 
 # %% [markdown]
-# 🔍 **Observa:** lo recuperado y lo citado no coinciden. Esa comparación la hace Python,
-# sin entender el texto. Es el **evaluador** más simple: un criterio que se puede comprobar.
-#
-# 🐍 **Python nuevo:** `citados <= disponibles` pregunta si un conjunto está *dentro* de otro
-# (todos los citados están entre los disponibles).
+# 🔍 **Observa:** BAT-99 está citada pero no fue recuperada. Es la misma comparación de
+# conjuntos de la clase 2 (`citados - disponibles`). Esta vez el evaluador no solo dice
+# "mal": también devuelve una **crítica**, qué está mal, para que el redactor pueda corregirlo.
 
 
 # %%
-def citas_validas(borrador, evidencia):
+def criticar(borrador, evidencia):
     disponibles = {h["id"] for h in evidencia["hits"]}
     citados = set(borrador["source_ids"])
-    return bool(citados) and citados <= disponibles
+    inventados = sorted(citados - disponibles)
+    if not citados:
+        return {"valido": False, "critica": "No citaste ninguna ficha.", "inventados": []}
+    if inventados:
+        # La crítica no repite los IDs inventados: nombrarlos invita al modelo a citarlos otra vez.
+        mensaje = f"{len(inventados)} cita(s) no están en la evidencia. Cita solo {sorted(disponibles)}."
+        return {"valido": False, "critica": mensaje, "inventados": inventados}
+    return {"valido": True, "critica": "", "inventados": []}
 
 
-confirmar(not citas_validas(borrador_roto, evidencia.model_dump()), "La cita inventada debía fallar")
-print("✅ El evaluador detecta la cita inventada.")
+resultado_critica = criticar(borrador_roto, evidencia.model_dump())
+print("Crítica:", resultado_critica["critica"])
+print("Citas a quitar:", resultado_critica["inventados"])
+confirmar(resultado_critica["inventados"] == ["BAT-99"], "El evaluador debía señalar BAT-99")
 
 # %% [markdown]
 # ## Evaluador–optimizador en LangGraph
@@ -65,16 +72,17 @@ print("✅ El evaluador detecta la cita inventada.")
 # ```text
 # START → recuperar → redactar → evaluar
 #                        ↑          ├─ válido ─────────────────────→ listo → END
-#                        └──────────┼─ inválido y quedan intentos
+#                        └─ crítica ┼─ inválido y quedan intentos
 #                                   └─ sin evidencia o sin intentos → escalar → END
 # ```
 #
-# El límite `max_intentos` viaja **en el estado**: cada solicitud trae el suyo.
-# Para ver el ciclo de forma repetible, **inyectamos** una cita falsa en el primer borrador.
+# Lo que hace que **optimice** (y no solo repita) es la flecha "crítica": el segundo intento
+# recibe qué falló en el primero. El límite `max_intentos` viaja **en el estado**.
 
 # %%
 from typing import TypedDict
 
+from langchain_core.prompts import ChatPromptTemplate
 from langgraph.graph import END, START, StateGraph
 
 
@@ -85,6 +93,8 @@ class EstadoRevision(TypedDict, total=False):
     intentos: int
     max_intentos: int
     valido: bool
+    critica: str
+    inventados: list[str]
     decision: str
     falla_inyectada: bool
 
@@ -93,16 +103,41 @@ def recuperar(estado):
     return {"evidencia": search_catalog(estado["pedido"], top_k=2).model_dump(), "intentos": 0}
 
 
+# %% [markdown]
+# `redactar` mira si hay una crítica del intento anterior:
+# - **offline:** quita del borrador las citas que la crítica marcó como inventadas;
+# - **live:** vuelve a pedirle al modelo la respuesta, con la crítica dentro del prompt.
+#
+# Para ver el ciclo siempre igual, **inyectamos** una cita falsa (BAT-99) en el primer intento.
+
+
+# %%
+def corregir_con_modelo(evidencia, critica):
+    plantilla = ChatPromptTemplate.from_messages([
+        ("system", "Responde solo con la evidencia y cita sus IDs. Corrige este problema: {critica}"),
+        ("human", "Pregunta: {pregunta}\nEvidencia: {contexto}"),
+    ]).partial(critica=critica)
+    return compose(evidencia, MODE, prompt=plantilla).model_dump()
+
+
 def redactar(estado):
     intento = estado["intentos"] + 1
-    borrador = compose(SearchResult.model_validate(estado["evidencia"]), MODE).model_dump()
-    if estado.get("falla_inyectada") and intento == 1:
-        borrador["source_ids"] = ["INVENTADA"]  # error a propósito, solo en el primer intento
+    evidencia = SearchResult.model_validate(estado["evidencia"])
+    if estado.get("critica") and MODE == "live":
+        borrador = corregir_con_modelo(evidencia, estado["critica"])
+    elif estado.get("critica"):
+        anterior = estado["borrador"]
+        borrador = {**anterior,
+                    "source_ids": [i for i in anterior["source_ids"] if i not in estado["inventados"]]}
+    else:
+        borrador = compose(evidencia, MODE).model_dump()
+    if estado.get("falla_inyectada") and intento == 1 and borrador["source_ids"]:
+        borrador["source_ids"] = [*borrador["source_ids"], "BAT-99"]  # error a propósito
     return {"borrador": borrador, "intentos": intento}
 
 
 def evaluar(estado):
-    return {"valido": citas_validas(estado["borrador"], estado["evidencia"])}
+    return criticar(estado["borrador"], estado["evidencia"])
 
 
 # %% [markdown]
@@ -142,8 +177,8 @@ grafo.add_edge("escalar", END)
 app_revision = grafo.compile()
 
 # %% [markdown]
-# 🔮 **Predice:** con la falla inyectada y `max_intentos=2`, ¿cuántos intentos hará?
-# ¿Y con `max_intentos=1`?
+# 🔮 **Predice:** con la falla inyectada y `max_intentos=2`, ¿cuántos intentos hará y qué
+# cita desaparecerá? ¿Y con `max_intentos=1`?
 
 # %%
 corregido = app_revision.invoke(
@@ -154,18 +189,22 @@ agotado = app_revision.invoke(
 )
 sin_evidencia = app_revision.invoke({"pedido": "vacuna marciana", "max_intentos": 3})
 for nombre, resultado in [("2 intentos", corregido), ("1 intento", agotado), ("sin evidencia", sin_evidencia)]:
-    print(f"{nombre:14} → intentos={resultado['intentos']} decisión={resultado['decision']}")
+    print(f"{nombre:14} → intentos={resultado['intentos']} decisión={resultado['decision']} "
+          f"citas={resultado['borrador']['source_ids']}")
+print("Crítica del primer intento (la que recibe el segundo):", agotado["critica"])
 confirmar(agotado["borrador"]["source_ids"] == [], "Un borrador escalado no debe llevar citas")
 if MODE == "offline":
     confirmar(corregido["intentos"] == 2 and corregido["valido"], "Debía corregirse en el intento 2")
+    confirmar("BAT-99" not in corregido["borrador"]["source_ids"], "La corrección debía quitar BAT-99")
     confirmar(sin_evidencia["intentos"] == 1, "Sin evidencia no debía repetir")
 
 # %% [markdown]
 # 🔍 **Observa:**
-# - Con 2 intentos, el segundo borrador corrige la cita y queda listo.
+# - Con 2 intentos, el segundo borrador **usa la crítica**: quita BAT-99 y queda listo.
 # - Con 1 intento, escala y **no** entrega el borrador malo.
 # - Sin evidencia, escala de inmediato: no gasta intentos en vano.
-#
+
+# %% [markdown]
 # ## ☕ Pausa
 
 # %% [markdown]
@@ -173,7 +212,8 @@ if MODE == "offline":
 # Un **checkpoint** es una foto del estado del grafo guardada en un momento. Gracias a esa
 # foto, el grafo puede **pausarse** con `interrupt(...)` y **continuar** después con
 # `Command(resume=...)`, aunque pasen minutos.
-#
+
+# %% [markdown]
 # - `InMemorySaver` guarda las fotos en la memoria del programa: si reinicias el kernel, se pierden.
 # - `thread_id` es el nombre de la conversación: con él se retoma la solicitud correcta.
 #
@@ -187,7 +227,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command, interrupt
 
 
-def revisar(estado):
+def pedir_decision(estado):
     respuesta = interrupt({"propuesta": estado["borrador"], "opciones": ["aprobar", "rechazar"]})
     return {"decision": respuesta}
 
@@ -198,7 +238,7 @@ def decision_valida(estado):
 
 
 humano = StateGraph(EstadoRevision)
-humano.add_node("revisar", revisar)
+humano.add_node("revisar", pedir_decision)
 humano.add_edge(START, "revisar")
 humano.add_conditional_edges("revisar", decision_valida, ["revisar", END])
 app_humana = humano.compile(checkpointer=InMemorySaver())
@@ -209,8 +249,9 @@ print("Propuesta esperando:", pausado["__interrupt__"][0].value["propuesta"]["so
 print("Próximo paso:", app_humana.get_state(hilo_a).next)
 
 # %% [markdown]
-# 🔍 **Observa:** el grafo no terminó: quedó detenido en `revisar`. Antes de continuar, una
-# persona de la pareja lee la propuesta y dice qué verificó. Aquí simulamos su respuesta.
+# 🔍 **Observa:** el grafo no terminó: quedó detenido en `revisar`. Antes de continuar, lee la
+# propuesta y di qué verificaste (si trabajas en pareja, que lo haga la otra persona).
+# Aquí simulamos la respuesta de quien revisa.
 
 # %%
 aprobado = app_humana.invoke(Command(resume="aprobar"), hilo_a)
@@ -250,6 +291,8 @@ def evaluar_casos(casos):
         ids = sorted(h.id for h in recibido.hits)
         filas.append({
             "query": caso["query"],
+            "coleccion": caso["universe"],
+            "tipo": caso.get("kind", "todos"),
             "esperado": sorted(caso["expected"]),
             "recibido": ids,
             "exacta": ids == sorted(caso["expected"]),
@@ -260,13 +303,16 @@ def evaluar_casos(casos):
 
 golden = json.loads((ROOT / "src/henry_agents/data/cultural_golden.json").read_text(encoding="utf-8"))
 filas = evaluar_casos(golden)
+print(f"   {'tema':24} {'colección':12} {'tipo':8} recibido")
 for fila in filas:
-    print("✅" if fila["exacta"] else "❌", f"{fila['query']:24}", fila["recibido"])
+    print("✅" if fila["exacta"] else "❌", f"{fila['query']:24} {fila['coleccion']:12} {fila['tipo']:8}",
+          fila["recibido"])
 print(f"Exactas: {sum(f['exacta'] for f in filas)}/{len(filas)} · "
       f"Abstención correcta: {sum(f['abstencion_ok'] for f in filas)}/{len(filas)}")
 
 # %% [markdown]
-# 🔍 **Observa:** "Batman vacuna marciana" espera vacío. Que exista la colección Batman no
+# 🔍 **Observa:** el mismo tema da resultados distintos según la **colección** y el **tipo**
+# (una ficha no es una canción): por eso cada caso los fija. "Batman vacuna marciana" espera vacío: que exista la colección Batman no
 # significa que exista el tema. Esos casos "trampa" valen más que diez casos fáciles.
 
 # %% [markdown]
@@ -275,7 +321,8 @@ print(f"Exactas: {sum(f['exacta'] for f in filas)}/{len(filas)} · "
 # usamos un **juez**: un revisor que devuelve un veredicto estructurado.
 #
 # - **offline:** el juez son **reglas** (no entiende el texto): cada ID citado debe existir
-#   y la frase debe compartir palabras clave con esa ficha.
+#   y la frase debe compartir palabras clave con esa ficha. Para encontrar los IDs usa la
+#   expresión regular que viste en la clase 4.
 # - **live:** el juez es GPT-6 con salida estructurada `Veredicto`.
 
 # %%
@@ -316,6 +363,10 @@ def juez_modelo(respuesta):
     return chat_model().with_structured_output(Veredicto).invoke([("system", instrucciones), ("human", pedido)])
 
 
+def mostrar(veredicto):
+    return f"{'fiel' if veredicto.fiel else 'no fiel'} — {veredicto.motivo}"
+
+
 juez = juez_modelo if MODE == "live" else juez_reglas
 
 # %% [markdown]
@@ -334,7 +385,7 @@ aciertos = 0
 for respuesta, etiqueta in etiquetadas:
     veredicto = juez(respuesta)
     aciertos += veredicto.fiel == etiqueta
-    print("✅" if veredicto.fiel == etiqueta else "❌", veredicto.fiel, "—", veredicto.motivo)
+    print("✅" if veredicto.fiel == etiqueta else "❌", mostrar(veredicto))
 print(f"El juez coincide con las personas en {aciertos} de {len(etiquetadas)} casos.")
 if MODE == "offline":
     confirmar(aciertos == 3, "El juez de reglas debía coincidir en los tres casos")
@@ -364,7 +415,14 @@ ruta.parent.mkdir(exist_ok=True)
 ruta.write_text(json.dumps({"modo": MODE, "casos": reporte, "usd": medicion["usd"]},
                            indent=2, ensure_ascii=False), encoding="utf-8")
 print("Reporte guardado en", ruta.relative_to(ROOT))
-confirmar(all(fila["citas"] for fila in reporte), "Los cinco casos tienen evidencia y debían citar")
+abstenciones = sum(not fila["citas"] for fila in reporte)
+print(f"Casos sin citas (abstención o respuesta rechazada): {abstenciones} de {len(reporte)}")
+if MODE == "offline":
+    confirmar(abstenciones == 0, "Los cinco casos tienen evidencia y debían citar")
+
+# %% [markdown]
+# 🔍 **Observa:** en live, un caso puede quedar sin citas si el modelo no respetó el formato:
+# `compose` prefiere abstenerse a entregar algo sin validar. Ese número también se reporta.
 
 # %% [markdown]
 # ## ☕ Pausa
@@ -383,8 +441,10 @@ caso_vacio = {"query": None, "universe": "chavo", "expected": []}  # ✏️ comp
 completos = caso_herramientas["expected"] is not None and caso_vacio["query"] is not None
 if completos:
     mis_filas = evaluar_casos([caso_herramientas, caso_vacio])
+    for fila in mis_filas:
+        print(f"{fila['query']:14} esperado={fila['esperado']} recibido={fila['recibido']}")
     comprobar(all(f["exacta"] for f in mis_filas), "Tus dos casos pasan.",
-              "Mira 'recibido' en cada fila y ajusta lo esperado o el tema.")
+              "Compara 'esperado' con 'recibido' en cada fila y ajusta lo que no coincida.")
 else:
     comprobar(False, "", "Reemplaza los dos None antes de comprobar.")
 
@@ -393,19 +453,23 @@ ver_solucion("06_casos_nuevos")
 
 # %% [markdown]
 # ## ✏️ Tu turno 2 · Etiqueta como persona
-# Lee esta respuesta y la ficha FAN-02 en el catálogo. Pon `True` si es fiel o `False` si no.
-# Después comparamos tu etiqueta con el juez.
-#
-# > "Reed compara un sensor de temperatura y otro de energía [FAN-02]."
+# Lee la respuesta y lo que dice la ficha FAN-02 (la celda siguiente la imprime). Pon `True`
+# si la respuesta es fiel a la ficha o `False` si no. Después comparamos tu etiqueta con el juez.
+
+# %%
+respuesta_fan = "Reed compara un sensor de temperatura y otro de energía [FAN-02]."
+print("Respuesta:", respuesta_fan)
+print("FAN-02 dice:", FICHAS["FAN-02"]["text"])
 
 # %%
 mi_etiqueta = None  # ✏️ True o False
 
 # %%
-respuesta_fan = "Reed compara un sensor de temperatura y otro de energía [FAN-02]."
-comprobar(mi_etiqueta is True, "Correcto: la frase repite lo que dice FAN-02.",
-          "Busca FAN-02 en el catálogo: ¿habla de dos sensores?")
-print("El juez dice:", juez(respuesta_fan))
+if mi_etiqueta is None:
+    comprobar(False, "", "Escribe True o False en mi_etiqueta.")
+else:
+    revisar("06_etiqueta_juez", mi_etiqueta)
+    print("El juez dice:", mostrar(juez(respuesta_fan)))
 
 # %%
 ver_solucion("06_etiqueta_juez")
@@ -413,21 +477,24 @@ ver_solucion("06_etiqueta_juez")
 # %% [markdown]
 # ## 🧱 Proyecto · Paso 6: evaluación y aprobación
 # Agrega a tu Asistente del Archivo:
-# 1. Un ciclo evaluador–optimizador con `max_intentos` en el estado y escalación sin evidencia.
-# 2. Una pausa de aprobación: muestra una aprobación y un rechazo en hilos distintos.
+# 1. Un ciclo evaluador–optimizador con crítica, `max_intentos` en el estado y escalación.
+# 2. Una pausa de aprobación: una aprobación y un rechazo en hilos distintos.
 # 3. Un reporte con al menos 5 casos (uno que espere vacío), el veredicto del juez y el costo.
 #
-# **Evidencia que guardas:** el JSON de `reports/` y las salidas de aprobar y rechazar.
-#
+# Guarda la evidencia en tu copia de `proyectos/asistente_archivo/mi_entrega.md`.
+
+# %% [markdown]
 # ## 🎟️ Ticket de salida
-# - ¿Por qué el borrador escalado no lleva las citas del último intento?
+# - ¿Qué recibe el segundo intento que no tenía el primero, y por qué eso lo hace "optimizar"?
 # - ¿Para qué sirve el `thread_id` al continuar una pausa?
 # - Da un ejemplo de respuesta con citas válidas que el juez debería marcar como no fiel.
-#
+
+# %% [markdown]
 # ## 📖 Glosario de hoy
 # | Término | En una frase |
 # |---|---|
-# | Evaluador–optimizador | Redactar, evaluar con un criterio y corregir con un límite |
+# | Evaluador–optimizador | Redactar, evaluar, corregir con la crítica y parar con un límite |
+# | Crítica | Lo que el evaluador dice que falló, para que el siguiente intento lo corrija |
 # | Escalar | Pasar el caso a una persona en lugar de entregar algo inválido |
 # | Checkpoint | Foto del estado del grafo que permite pausar y continuar |
 # | `thread_id` | Nombre de una conversación o solicitud para retomarla |
@@ -435,9 +502,11 @@ ver_solucion("06_etiqueta_juez")
 # | Golden set | Casos con respuesta conocida para medir el comportamiento |
 # | Juez (LLM-as-judge) | Revisor que devuelve un veredicto estructurado sobre una respuesta |
 # | Calibrar | Comparar el juez con etiquetas humanas antes de confiar en él |
-#
+
+# %% [markdown]
 # ## Límites de lo que hicimos
 # - El juez de reglas solo compara palabras: no entiende el sentido. El juez GPT-6 tampoco es
 #   infalible; por eso se calibra.
+# - Offline, la corrección solo quita citas marcadas; un modelo real reescribe la respuesta.
 # - Las pausas viven en memoria: si reinicias el kernel, se pierden.
 # - Las aprobaciones son simuladas y no publican nada.

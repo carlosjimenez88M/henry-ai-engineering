@@ -9,6 +9,8 @@
 # - Una comparación entre búsqueda por palabras y búsqueda por significado.
 #
 # **Necesitas:** clase 1 (y ruta 1). Modo offline por defecto; live si el docente lo activa.
+# La [clase inicial 08](agentic_workflows/08_rag_desde_cero.ipynb) desarrolla ingesta,
+# fragmentación, BM25, cobertura y fidelidad con una tienda de barrio.
 #
 # **Recorrido:**
 # - Qué es RAG, en tres pasos
@@ -103,17 +105,25 @@ print(mensajes.to_string()[:600])
 # que el programa puede revisar sin leer prosa. `with_structured_output` se lo pide al modelo.
 
 # %%
-from langchain_core.exceptions import OutputParserException
-
 from henry_agents.agentic import cerebro
 from henry_agents.cultural import GroundedAnswer
 
 modelo = cerebro(MODE).with_structured_output(GroundedAnswer)
-try:
-    respuesta = modelo.invoke(mensajes)
-except OutputParserException:
-    # A veces un modelo real devuelve algo fuera del formato: mejor abstenerse que adivinar.
-    respuesta = GroundedAnswer(text="La respuesta no respetó el formato.", source_ids=[])
+
+
+def generar(mensajes):
+    """Pide la salida estructurada; si el modelo o la API fallan, se abstiene en lugar de adivinar."""
+    try:
+        salida = modelo.invoke(mensajes)
+    except Exception as error:  # en live: formato roto, red caída, límite de la API...
+        print(f"⚠️ No se pudo generar ({type(error).__name__}): nos abstenemos.")
+        return GroundedAnswer(text="No pude generar una respuesta válida.", source_ids=[])
+    # Un modelo real a veces escribe "[BAT-01]": es la misma cita, normalizamos la escritura.
+    salida.source_ids = [cita.strip("[] ") for cita in salida.source_ids]
+    return salida
+
+
+respuesta = generar(mensajes)
 print("Texto:", respuesta.text)
 print("Fuentes:", respuesta.source_ids)
 
@@ -127,7 +137,7 @@ print("Fuentes:", respuesta.source_ids)
 # %%
 nada = search_catalog("vacuna marciana")
 mensajes_vacios = plantilla.invoke({"pregunta": "vacuna marciana", "contexto": nada.model_dump_json()})
-sin_evidencia = modelo.invoke(mensajes_vacios)
+sin_evidencia = generar(mensajes_vacios)
 print("Texto:", sin_evidencia.text)
 print("Fuentes:", sin_evidencia.source_ids)
 confirmar(nada.hits == [], "La búsqueda de 'vacuna marciana' debía venir vacía")
@@ -160,8 +170,8 @@ def referencias_validas(respuesta, evidencia):
     return bool(citadas) and citadas <= disponibles
 
 
-print("Respuesta real:", referencias_validas(respuesta, evidencia))
-print("Respuesta inventada:", referencias_validas(inventada, evidencia))
+print("¿Citas válidas en la respuesta del paso 3?", referencias_validas(respuesta, evidencia))
+print("¿Citas válidas en el objeto con BAT-99?  ", referencias_validas(inventada, evidencia))
 if MODE == "offline":
     confirmar(referencias_validas(respuesta, evidencia), "La respuesta offline cita fichas recuperadas")
 confirmar(not referencias_validas(inventada, evidencia), "BAT-99 no está entre las fichas recuperadas")
@@ -171,7 +181,10 @@ confirmar(not referencias_validas(inventada, evidencia), "BAT-99 no está entre 
 # todas existan. Ojo: una cita válida no prueba que **cada frase** sea fiel a la ficha; eso
 # se revisa leyendo o con un juez (clase 6).
 #
-# Así se ve el error cuando lo comete un agente. Este cerebro tiene la falla `inventa_id`:
+# Así se ve el error cuando lo comete un agente. Usamos un cerebro con la falla `inventa_id`
+# **también en live**: queremos ver el error a propósito, sin depender de que GPT-6 se equivoque.
+# Con `response_format=GroundedAnswer` el agente entrega sus citas en `source_ids`: nadie las
+# copia a mano.
 
 # %%
 from langchain_core.messages import HumanMessage
@@ -179,24 +192,30 @@ from langchain_core.messages import HumanMessage
 from henry_agents.agentic import ModeloReglas, crear_agente
 from henry_agents.cultural import SearchResult
 
-agente_mentiroso = crear_agente(MODE, model=ModeloReglas(falla="inventa_id"))
+agente_mentiroso = crear_agente(
+    MODE, model=ModeloReglas(falla="inventa_id"), response_format=GroundedAnswer
+)
 salida = agente_mentiroso.invoke({"messages": [HumanMessage("investigación de Batman")]})
-texto_final = salida["messages"][-1].text
-print(texto_final)
+respuesta_mentirosa = salida["structured_response"]  # la salida estructurada del agente
+print("Texto:", respuesta_mentirosa.text)
+print("Fuentes:", respuesta_mentirosa.source_ids)
 
-observacion = SearchResult.model_validate_json(salida["messages"][-2].text)
-citas = GroundedAnswer(text=texto_final, source_ids=["BAT-01", "BAT-03", "BAT-99"])
-print("¿Citas válidas?", referencias_validas(citas, observacion))
+# Lo que la herramienta REALMENTE devolvió: el mensaje de buscar_archivo.
+mensaje_busqueda = next(m for m in salida["messages"] if m.type == "tool" and m.name == "buscar_archivo")
+observacion = SearchResult.model_validate_json(mensaje_busqueda.text)
+print("¿Citas válidas?", referencias_validas(respuesta_mentirosa, observacion))
+confirmar(not referencias_validas(respuesta_mentirosa, observacion), "El validador debía rechazar BAT-99")
 
 # %% [markdown]
-# 🔍 **Observa:** la respuesta *suena* segura y aun así cita `[BAT-99]`, que no existe. Tu
-# validador lo atrapa. Así funcionan los errores reales: fluidos y convincentes.
+# 🔍 **Observa:** la respuesta *suena* segura y aun así cita `BAT-99`, que no existe. Para
+# validar comparamos con el mensaje de la herramienta (`m.type == "tool"`), no con lo que el
+# modelo dice haber leído. Así son los errores reales: fluidos y convincentes.
 
 # %% [markdown]
 # ## ✏️ Tu turno 1 · Un validador que explique el problema
 # Completa `citas_inventadas` para que devuelva el **conjunto** de IDs citados que NO están en
-# la evidencia. Pista: la resta de conjuntos `a - b` deja lo que está en `a` y no en `b`.
-# Sabrás que salió bien cuando la comprobación muestre ✅.
+# la evidencia. Con `{"BAT-01", "BAT-99"}` citadas y `{"BAT-01", "BAT-03"}` disponibles, debe dar
+# `{"BAT-99"}`. Sabrás que salió bien cuando la comprobación muestre ✅.
 
 
 # %%
@@ -207,10 +226,12 @@ def citas_inventadas(respuesta, evidencia):
 
 
 # %%
+mi_resultado = citas_inventadas(respuesta_mentirosa, observacion)
 comprobar(
-    citas_inventadas(citas, observacion) == {"BAT-99"},
+    mi_resultado == {"BAT-99"},
     "Encontraste exactamente la cita inventada.",
-    "Usa citadas - disponibles y devuelve ese conjunto.",
+    f"Tu función devolvió {mi_resultado!r}. ¿Qué operación entre conjuntos deja lo que está en "
+    "`citadas` pero no en `disponibles`? (Ya usaste `<=`; los conjuntos tienen más operaciones.)",
 )
 
 # %%
@@ -249,18 +270,22 @@ for palabra in ["enigma", "detective", "equipo", "sensores"]:
 
 # %% [markdown]
 # "enigma" y "detective" puntúan alto en *misterio*; "equipo" en *colaboración*. La
-# **similitud coseno** mide si dos vectores apuntan hacia el mismo lado: 1 es "mismo
-# significado", 0 es "nada en común".
+# **similitud coseno** mide si dos vectores apuntan hacia el mismo lado: 1 indica la
+# misma dirección y 0, que no tienen nada en común. No certifica igualdad de significado.
 
 # %%
+from henry_agents.config import model_name
+
 print("enigma vs detective:", round(similitud(vector_de("enigma"), vector_de("detective")), 3))
 print("enigma vs equipo:   ", round(similitud(vector_de("enigma"), vector_de("equipo")), 3))
+print("Modelo de embeddings en live:", model_name("embeddings"))
 
 # %% [markdown]
-# 🔍 **Observa:** los embeddings reales hacen lo mismo con **1.536 números** que aprende un
-# modelo, no con 3 elegidos a mano. En live, `buscar_por_significado` usa
-# `text-embedding-3-small` de OpenAI (unos $0.02 por millón de tokens: el catálogo entero
-# cuesta una fracción de centavo). La idea es idéntica: cerca = parecido.
+# 🔍 **Observa:** un embedding real no tiene 3 números elegidos a mano sino **miles de números
+# aprendidos** (3.072 en `text-embedding-3-large`). En live, `buscar_por_significado` usa el
+# modelo de `model_name("embeddings")`, configurable en `.env` con `OPENAI_EMBEDDING_MODEL`
+# ([modelos actuales](../docs/MODELOS.md)). Una cercanía alta es una pista, no una prueba:
+# verifica siempre la ficha encontrada.
 #
 # | Búsqueda | Ventaja | Riesgo |
 # |---|---|---|
@@ -287,12 +312,26 @@ else:
 comprobar(
     bool(resultado_colaborar) and resultado_colaborar[0][1] in {"MUS-01", "CHA-01", "FAN-01", "FAN-03"},
     "Tu vector apunta al eje de colaboración: aparecen fichas de equipo.",
-    "Pon el número más alto en el segundo eje (colaboración), por ejemplo (0.05, 0.9, 0.05).",
+    "¿En cuál de los tres ejes (misterio, colaboración, tecnología) debería tener su número "
+    "más alto una palabra como 'colaborar'?",
 )
-print("Tu predicción:", mi_prediccion)
+if resultado_colaborar and mi_prediccion is None:
+    print("🔁 Anota tu predicción en mi_prediccion antes de mirar el resultado.")
+elif resultado_colaborar:
+    primero = resultado_colaborar[0][1]
+    comprobar(
+        mi_prediccion == primero,
+        f"Predijiste {primero}: tu intuición coincide con el mapa.",
+        f"El mapa puso primero a {primero}. ¿Qué etiquetas tiene esa ficha que la acercan a tu vector?",
+    )
 
 # %%
 ver_solucion("02_mapa_colaborar")
+
+# %% [markdown]
+# **Para profundizar:** en *agentic RAG* el agente decide buscar otra vez si le falta
+# evidencia, en lugar de responder con lo primero que encontró. Lo verás construido paso a
+# paso en [09 · Agentic RAG](agentic_workflows/09_agentic_rag.ipynb) de la ruta 1.
 
 # %% [markdown]
 # ## 🧱 Proyecto · Paso 2: respuestas con fuentes
@@ -301,14 +340,16 @@ ver_solucion("02_mapa_colaborar")
 # 2. Genera ambas respuestas con salida estructurada.
 # 3. Pasa las dos por `referencias_validas` y por `citas_inventadas`.
 #
-# **Evidencia que guardas:** una respuesta con fuentes válidas y una abstención.
+# **Evidencia que guardas** (en tu copia de `proyectos/asistente_archivo/mi_entrega.md`, sección
+# Paso 2): una respuesta con fuentes válidas y una abstención.
 
 # %% [markdown]
 # ## 🎟️ Ticket de salida
 # 1. ¿Por qué cambiar la redacción del prompt no arregla una búsqueda que no encontró nada?
 # 2. Un objeto con la forma correcta y una cita inventada: ¿qué lo detecta?
 # 3. ¿Cuándo preferirías buscar por significado y cuándo por palabras?
-#
+
+# %% [markdown]
 # ## 📖 Glosario de hoy
 # | Término | En una frase |
 # |---|---|
@@ -318,10 +359,11 @@ ver_solucion("02_mapa_colaborar")
 # | Abstención | Decir "no hay evidencia" en lugar de inventar |
 # | Conjunto (`set`) | Colección sin repetidos; `a <= b` pregunta si `a` está dentro de `b` |
 # | Embedding | Lista de números que representa el significado de un texto |
-# | Similitud coseno | Número de 0 a 1 que dice cuánto se parecen dos embeddings |
-#
+# | Similitud coseno | Mide si dos vectores apuntan al mismo lado: va de -1 a 1 (1 = misma dirección) |
+
+# %% [markdown]
 # ## Límites de lo que hicimos
 # - Validar IDs no prueba que cada frase sea fiel a la ficha (eso llega en la clase 6).
-# - El mapa de tres ejes es un juguete para entender la idea; los embeddings reales aprenden
-#   cientos de dimensiones.
+# - El mapa de tres ejes es un juguete para entender la idea; los embeddings reales tienen
+#   miles de números aprendidos (3.072 en `text-embedding-3-large`).
 # - Offline, la "generación" la hacen reglas que copian frases de las fichas.

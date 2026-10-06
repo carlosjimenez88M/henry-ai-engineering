@@ -19,8 +19,14 @@ def validar_ids(texto: str) -> dict:
     return {"citados": sorted(citados), "inventados": sorted(inventados), "valido": valido}
 
 
-prueba = validar_ids.invoke({"texto": "Según [BAT-01] y [ZZZ-01], el reloj estaba adelantado."})
-print(prueba)
+con_inventado = validar_ids.invoke({"texto": "Según [BAT-01] y [ZZZ-01], el reloj estaba adelantado."})
+sin_citas = validar_ids.invoke({"texto": "Un texto que no cita ninguna ficha."})
+print(con_inventado)
+print(sin_citas)
 print(validar_ids.invoke({"texto": "Según [BAT-01], el reloj estaba adelantado."}))
-confirmar(prueba == {"citados": ["BAT-01", "ZZZ-01"], "inventados": ["ZZZ-01"], "valido": False},
-          "La herramienta debía marcar ZZZ-01 como inventado")
+# Sin bool(citados), un texto sin citas daría valido=True: no tendría fuentes y "pasaría".
+confirmar(
+    con_inventado == {"citados": ["BAT-01", "ZZZ-01"], "inventados": ["ZZZ-01"], "valido": False}
+    and sin_citas["valido"] is False,
+    "La herramienta debía marcar ZZZ-01 y rechazar un texto sin citas",
+)

@@ -356,6 +356,7 @@ TRADUCCIONES = [
     ),
     (r"Model call limits exceeded: run limit \((\d+)/(\d+)\)", r"Límite de llamadas al modelo alcanzado (\1 de \2). Me detengo."),
     (r"User rejected the tool call for `(\w+)` with reason: (.*)", r"Una persona rechazó \1. Motivo: \2"),
+    (r"(\d+) validation errors? for (\w+)", r"Error de validación en \2:"),
     (r"\s*\[type=[^\]]*\]", ""),
     (r"\s*For further information visit \S+", ""),
     (r"' or '", "' o '"),
@@ -417,9 +418,10 @@ def linea_de_tiempo(mensajes, ancho=160):
 def ver_en_vivo(agente, entrada, config=None, ancho=140):
     """Ejecuta un agente mostrando cada paso apenas ocurre (streaming), incluso subagentes.
 
-    Devuelve el estado final (si el agente tiene checkpointer) o los mensajes vistos.
+    Devuelve el estado final (si el agente tiene checkpointer) o los mensajes vistos, más
+    "pasos": la lista [(quién, mensaje)] con lo que hizo cada agente y subagente.
     """
-    vistos, pausas, nombres = [], [], {}
+    vistos, pausas, nombres, pasos = [], [], {}, []
     if isinstance(entrada, dict):
         for mensaje in entrada.get("messages", []):
             if isinstance(mensaje, BaseMessage):
@@ -450,6 +452,7 @@ def ver_en_vivo(agente, entrada, config=None, ancho=140):
                 mensajes = [mensajes]
             for mensaje in mensajes:
                 if isinstance(mensaje, BaseMessage):
+                    pasos.append((quien if espacio else "principal", mensaje))
                     if not espacio:
                         vistos.append(mensaje)
                     for linea in describir(mensaje, ancho):
@@ -460,6 +463,8 @@ def ver_en_vivo(agente, entrada, config=None, ancho=140):
         final = {"messages": vistos}
     if pausas:
         final["__interrupt__"] = pausas
+    # Todos los pasos vistos, también los de subagentes: [(quién, mensaje), ...]
+    final["pasos"] = pasos
     return final
 
 
@@ -537,6 +542,7 @@ def crear_agente(
     checkpointer=None,
     response_format=None,
     middleware=(),
+    name=None,
 ):
     """create_agent con límites declarados como middleware.
 
@@ -560,6 +566,7 @@ def crear_agente(
         ],
         checkpointer=checkpointer,
         response_format=response_format,
+        name=name,
     )
 
 

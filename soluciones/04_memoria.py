@@ -23,4 +23,7 @@ conversador.invoke({"messages": [HumanMessage("Hola, me llamo Beto")]}, config_b
 config_pregunta = config_beto
 salida = conversador.invoke({"messages": [HumanMessage("¿Cómo me llamo?")]}, config_pregunta)
 print(salida["messages"][-1].text)
-confirmar("Beto" in salida["messages"][-1].text, "El asistente debía recordar a Beto")
+# En cualquier modo: el hilo guarda los dos turnos (4 mensajes), o sea, la memoria existe.
+confirmar(len(salida["messages"]) == 4, "El hilo de Beto debía guardar sus dos turnos")
+if MODE == "offline":
+    confirmar("Beto" in salida["messages"][-1].text, "El asistente debía recordar a Beto")

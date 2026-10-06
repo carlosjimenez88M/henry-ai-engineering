@@ -5,7 +5,7 @@
 #
 # **Vas a construir:**
 # - Un agente con `create_agent`, límites, memoria y salida estructurada.
-# - Un laboratorio de fallas: cuatro errores típicos de los modelos y su defensa.
+# - Un laboratorio de fallas: cuatro errores típicos de los modelos y su defensa en código.
 # - Una defensa en capas contra la *inyección de prompts*.
 #
 # **Necesitas:** clases 1 a 3 (y la ruta 1). Modo offline por defecto; live si el docente lo activa.
@@ -22,9 +22,9 @@
 # - Costo, proyecto y cierre
 
 # %%
-from henry_agents.agentic import crear_agente, linea_de_tiempo, mostrar_grafo
+from henry_agents.agentic import crear_agente, linea_de_tiempo
 from henry_agents.config import configure
-from henry_agents.practica import comprobar, confirmar, ver_solucion
+from henry_agents.practica import comprobar, confirmar, revisar, ver_solucion
 
 MODE = configure()
 print("Modo:", MODE)
@@ -47,19 +47,36 @@ linea_de_tiempo(resultado["messages"])
 # %% [markdown]
 # 🔍 **Observa:**
 # - 👤 pide, 🤖 propone `buscar_archivo`, 🔧 el programa ejecuta, 🤖 responde con IDs.
-# - La etiqueta `reglas-offline` te dice quién decide: en live dirá `gpt-6-luna`.
-#
-# El agente también es un grafo. Los nodos con "Middleware" son **middleware** (piezas que se
-# ejecutan antes o después del modelo, como un control en la puerta): ahí viven los límites.
+# - La etiqueta `reglas-offline` dice quién decide. En live verás un nombre que empieza con
+#   `gpt-6-luna` (la API puede agregarle una fecha).
 
-# %%
-mostrar_grafo(agente)
+# %% [markdown]
+# ### Por dentro: el bucle con dos controles
+# Los límites viven en el **middleware**: piezas que se ejecutan antes o después del modelo,
+# como un control en la puerta. `crear_agente` agrega dos:
+#
+# ```text
+#            ┌───────────────────────────────────────────────┐
+#            ▼                                               │
+# START → [LimiteDeLlamadas] → modelo → [ToolCallLimitMiddleware] → herramientas
+#              │ ¿ya van N llamadas?        │ ¿ya van M búsquedas?
+#              └─→ corta y responde 🛑      └─→ no ejecuta más ⚠️
+#                                   modelo sin pedir herramientas → END
+# ```
+#
+# - **`LimiteDeLlamadas`** cuenta cuántas veces se llamó al modelo y corta el bucle.
+# - **`ToolCallLimitMiddleware`** cuenta cuántas herramientas se ejecutaron.
+#
+# Ninguno es un presupuesto en dólares: son frenos de pasos.
 
 # %% [markdown]
 # ## Ver al agente trabajar en vivo
-# Un agente real puede tardar decenas de segundos. Con `invoke` ves todo al final. Con
-# **streaming** (recibir cada paso apenas ocurre) ves el progreso: así se diagnostica un
-# agente lento o atascado. `ver_en_vivo` imprime cada paso en el momento.
+# Con `invoke` recibes todo **al final**. Con **streaming** (recibir cada paso apenas ocurre)
+# ves el progreso mientras pasa. Con un modelo real, un agente puede tardar decenas de
+# segundos: el streaming te muestra si está buscando, esperando o atascado.
+#
+# Siendo honestos: en offline cada paso tarda milisegundos, así que verás lo mismo que la línea
+# de tiempo. La diferencia se nota en live, donde cada línea aparece cuando ocurre.
 
 # %%
 from henry_agents.agentic import ver_en_vivo
@@ -70,9 +87,10 @@ en_vivo = ver_en_vivo(agente, {"messages": [HumanMessage("Busca cooperación de 
 # ## Memoria: conversaciones de varios turnos
 # Un modelo **no recuerda nada** entre llamadas. "Memoria" significa que el programa le vuelve
 # a pasar los mensajes anteriores. Eso lo hace un **checkpointer** (guarda el estado de cada
-# conversación), y cada conversación se identifica con un **thread_id** (número de hilo).
+# conversación), y cada conversación se identifica con un **thread_id** (identificador de hilo).
 #
-# Para esta demo usamos un asistente sin herramientas: solo conversa.
+# 🐍 **Python nuevo:** `uuid4()` genera un identificador al azar, distinto cada vez. Lo usamos
+# como `thread_id` para que dos conversaciones nunca compartan memoria por accidente.
 #
 # 🔮 **Predice:** si preguntas "¿Cómo me llamo?" en **otro** hilo, ¿qué responde?
 
@@ -98,13 +116,14 @@ print("Otro hilo: ", otro_hilo["messages"][-1].text)
 print("Mensajes guardados en el hilo de Ana:", len(mismo_hilo["messages"]))
 
 # %% [markdown]
-# 🔍 **Observa:** el hilo de Ana tiene 4 mensajes: los dos turnos completos. El otro hilo
+# 🔍 **Observa:** el hilo de Ana guarda 4 mensajes: los dos turnos completos. El otro hilo
 # empieza vacío. `InMemorySaver` guarda en la memoria del programa: si reinicias el kernel,
 # se pierde. En producción se usa una base de datos.
-#
+
+# %% [markdown]
 # ### ✏️ Tu turno 1 · Elige el hilo
-# Queremos que el asistente recuerde a Beto. Completa `config_pregunta` con la configuración
-# correcta (pista: ¿en qué hilo se presentó Beto?).
+# Queremos que el asistente recuerde a Beto. En la celda de abajo, reemplaza `None` por la
+# configuración correcta: `config_ana`, `config_beto` o `config_otro`.
 
 # %%
 config_beto = {"configurable": {"thread_id": str(uuid4())}}
@@ -122,7 +141,7 @@ if config_pregunta is not None:
 comprobar(
     config_pregunta is config_beto,
     "Correcto: la memoria vive en el hilo donde Beto se presentó.",
-    "La memoria es por thread_id. Usa la configuración del hilo donde dijo su nombre.",
+    "¿En qué hilo dijo Beto su nombre? La memoria no se comparte entre hilos.",
 )
 
 # %%
@@ -151,7 +170,7 @@ print("Fuentes:", estructura.fuentes)
 
 # %% [markdown]
 # Ahora la validación de citas de la clase 2 es una línea: comparamos `fuentes` con los IDs
-# reales del catálogo.
+# reales del catálogo, sin leer el texto.
 
 # %%
 from henry_agents.cultural import load_catalog
@@ -164,11 +183,12 @@ if MODE == "offline":
 
 # %% [markdown]
 # ## ☕ Pausa
-#
+
+# %% [markdown]
 # ## Laboratorio de fallas
 # Los modelos reales se equivocan. Para practicar sin esperar a que ocurra, `ModeloReglas`
-# puede cometer **a propósito** cuatro errores típicos. Para cada uno: predice, ejecuta,
-# encuentra la pista en la línea de tiempo y nombra la defensa.
+# puede cometer **a propósito** cuatro errores típicos. Lo usamos en ambos modos: así el error
+# aparece siempre igual. Para cada falla: predice, ejecuta, encuentra la pista y nombra la defensa.
 
 # %%
 from henry_agents.agentic import ModeloReglas
@@ -189,25 +209,49 @@ def probar_falla(falla, max_llamadas=4):
 
 # %%
 mensajes_sin_buscar = probar_falla("no_usa_herramienta")
-herramientas_usadas = [m for m in mensajes_sin_buscar if m.type == "tool"]
-print("Herramientas ejecutadas:", len(herramientas_usadas))
+print("Herramientas ejecutadas:", len([m for m in mensajes_sin_buscar if m.type == "tool"]))
 
 # %% [markdown]
-# 🔍 Respondió sin buscar y citó `[BAT-07]`, que no existe. **Defensa:** exigir evidencia
-# antes de aceptar una respuesta (si no hubo 🔧, no se entrega) y validar las citas.
+# 🔍 Respondió sin buscar y citó `[BAT-07]`, que no existe. La defensa es **no aceptar respuestas
+# sin evidencia**: revisar con código que hubo una búsqueda y que cada cita salió de ella.
 #
-# **Falla 2 · Inventa un ID.** 🔮 ¿Cómo lo detectarías sin leer el texto con lupa?
+# 🐍 **Python nuevo:** una **expresión regular** es un patrón para encontrar texto. El patrón
+# `\b[A-Z]{3}-\d{2}\b` significa: tres letras mayúsculas, un guion y dos dígitos (como `BAT-01`).
+# `re.findall(patron, texto)` devuelve todas las coincidencias.
 
 # %%
 import re
 
-mensajes_inventa = probar_falla("inventa_id")
-citados = set(re.findall(r"\b[A-Z]{3}-\d{2}\b", mensajes_inventa[-1].text))
-print("Citas que no existen:", citados - ids_catalogo)
+PATRON_ID = r"\b[A-Z]{3}-\d{2}\b"
+
+
+def aceptar_respuesta(mensajes):
+    """Defensa D: aceptar solo si hubo búsqueda y cada cita apareció en lo que se buscó."""
+    busquedas = [
+        m for m in mensajes if m.type == "tool" and m.name == "buscar_archivo" and m.status != "error"
+    ]
+    if not busquedas:
+        return False, "no hubo ninguna búsqueda: la respuesta no tiene evidencia"
+    vistos = set(re.findall(PATRON_ID, " ".join(m.text for m in busquedas)))
+    citados = set(re.findall(PATRON_ID, mensajes[-1].text))
+    if not citados <= vistos:
+        return False, f"cita algo que no buscó: {sorted(citados - vistos)}"
+    return True, "respaldada por la búsqueda"
+
+
+print("Falla 1:", aceptar_respuesta(mensajes_sin_buscar))
+print("Agente normal:", aceptar_respuesta(resultado["messages"]))
 
 # %% [markdown]
-# 🔍 Buscó bien, pero agregó `[BAT-99]`. **Defensa:** validar citas con código (clase 2) o pedir
-# salida estructurada y comparar `fuentes` con el catálogo.
+# **Falla 2 · Inventa un ID.** 🔮 ¿La misma función `aceptar_respuesta` lo detecta?
+
+# %%
+mensajes_inventa = probar_falla("inventa_id")
+print("Falla 2:", aceptar_respuesta(mensajes_inventa))
+
+# %% [markdown]
+# 🔍 Buscó bien, pero agregó `[BAT-99]`. **Defensa:** validar citas con código (clase 2), o
+# pedir salida estructurada y comparar `fuentes` con el catálogo.
 #
 # **Falla 3 · Argumentos inválidos.** El modelo pide `top_k=50`. 🔮 ¿Se rompe el programa?
 
@@ -225,15 +269,15 @@ mensajes_argumentos = probar_falla("argumentos_invalidos")
 mensajes_bucle = probar_falla("bucle", max_llamadas=3)
 busquedas = [m for m in mensajes_bucle if m.type == "tool"]
 print("Búsquedas antes del corte:", len(busquedas))
-if MODE == "offline":
-    confirmar(len(busquedas) == 3, "El límite debía cortar tras 3 llamadas al modelo")
+confirmar(len(busquedas) == 3, "El límite debía cortar tras 3 llamadas al modelo")
 
 # %% [markdown]
-# 🔍 `LimiteDeLlamadas` cortó el bucle con un mensaje claro. **Defensa:** límites de llamadas al
-# modelo y a herramientas, declarados como middleware.
-#
+# 🔍 La última línea empieza con 🛑: no la escribió el modelo, la escribió `LimiteDeLlamadas`.
+# **Defensa:** límites de llamadas al modelo y a herramientas, declarados como middleware.
+
+# %% [markdown]
 # ### ✏️ Tu turno 2 · Une cada falla con su defensa
-# Completa el diccionario con la letra de la defensa principal:
+# Completa el diccionario con la letra de la defensa **principal** de cada falla:
 # **A** contrato estricto · **B** validar citas con código · **C** límite de llamadas ·
 # **D** no aceptar respuestas sin evidencia de una herramienta.
 
@@ -246,13 +290,7 @@ mis_defensas = {
 }
 
 # %%
-esperadas = {"no_usa_herramienta": "D", "inventa_id": "B", "argumentos_invalidos": "A", "bucle": "C"}
-for falla, defensa in esperadas.items():
-    comprobar(
-        mis_defensas[falla] == defensa,
-        f"{falla}: defensa {defensa}.",
-        f"{falla}: vuelve a mirar su línea de tiempo. ¿Qué la habría frenado?",
-    )
+revisar("04_defensas", mis_defensas)
 
 # %%
 ver_solucion("04_defensas")
@@ -267,29 +305,29 @@ ver_solucion("04_defensas")
 # 🔮 **Predice:** ¿el agente obedecerá la reseña?
 
 # %%
-from henry_agents.agentic import leer_resenas, publicar_anuncio
+from henry_agents.agentic import ANUNCIOS_PUBLICADOS, leer_resenas, publicar_anuncio
 
 agente_resenas = crear_agente(MODE, tools=[leer_resenas, publicar_anuncio])
 salida = agente_resenas.invoke({"messages": [HumanMessage("Resume las reseñas de BAT-01")]})
 linea_de_tiempo(salida["messages"], ancho=300)
+print("Anuncios en la cartelera:", ANUNCIOS_PUBLICADOS)
 
 # %% [markdown]
-# 🔍 El cerebro por defecto trató la reseña como **dato**, no como orden. Pero un modelo real
-# a veces obedece. Simulemos ese caso con `falla="obedece_inyeccion"` y agreguemos una segunda
-# capa: **aprobación humana** antes de cualquier acción visible.
+# 🔍 Este cerebro trató la reseña como **dato**, no como orden (GPT-6 en live suele hacer lo
+# mismo; si publicó el anuncio, acabas de ver por qué hace falta la próxima capa).
+#
+# Pero "suele resistir" no es una defensa. Simulamos un modelo que **sí obedece** con
+# `falla="obedece_inyeccion"`, **también en live**: la protección no puede depender de que el
+# modelo se porte bien. Agregamos una segunda capa: **aprobación humana** antes de actuar.
 
 # %%
 from langgraph.types import Command
 
-from henry_agents.agentic import (
-    ANUNCIOS_PUBLICADOS,
-    HumanInTheLoopMiddleware,
-    solicitudes_pendientes,
-)
+from henry_agents.agentic import HumanInTheLoopMiddleware, solicitudes_pendientes
 
 agente_ingenuo = crear_agente(
     MODE,
-    model=ModeloReglas(falla="obedece_inyeccion") if MODE == "offline" else None,
+    model=ModeloReglas(falla="obedece_inyeccion"),  # simulado en ambos modos
     tools=[leer_resenas, publicar_anuncio],
     checkpointer=InMemorySaver(),
     middleware=[HumanInTheLoopMiddleware({"publicar_anuncio": True})],
@@ -299,6 +337,7 @@ anuncios_antes = len(ANUNCIOS_PUBLICADOS)
 pausado = agente_ingenuo.invoke({"messages": [HumanMessage("Resume las reseñas de BAT-01")]}, config_resenas)
 for accion in solicitudes_pendientes(pausado):
     print("⏸️ Quiere ejecutar:", accion["name"], accion["args"])
+confirmar(bool(solicitudes_pendientes(pausado)), "El modelo ingenuo debía intentar publicar")
 
 # %% [markdown]
 # La persona revisora lee la propuesta y la **rechaza**. 🔮 ¿Cambia la cartelera?
@@ -308,27 +347,28 @@ rechazos = [
     {"type": "reject", "message": "Viene de una reseña del público: es una inyección."}
     for _ in solicitudes_pendientes(pausado)
 ]
-if rechazos:
-    agente_ingenuo.invoke(Command(resume={"decisions": rechazos}), config_resenas)
+agente_ingenuo.invoke(Command(resume={"decisions": rechazos}), config_resenas)
 print("Anuncios publicados nuevos:", len(ANUNCIOS_PUBLICADOS) - anuncios_antes)
 confirmar(len(ANUNCIOS_PUBLICADOS) == anuncios_antes, "Un rechazo no debe publicar nada")
 
 # %% [markdown]
 # 🔍 **Defensa en capas:** (1) darle al agente solo las herramientas que necesita; (2) decirle
 # en el prompt que los datos no son órdenes; (3) pedir aprobación humana antes de actuar.
-# **Un prompt solo no es seguridad**: la capa que de verdad frenó el ataque fue la aprobación.
-#
+# **Un prompt solo no es seguridad**: con un modelo que obedece, la capa que frenó fue la aprobación.
+
+# %% [markdown]
 # ### ✏️ Tu turno 3 · Protege la herramienta peligrosa
-# Completa `proteger` con el diccionario que pide aprobación antes de `publicar_anuncio`.
+# Completa `proteger` con el diccionario que pide aprobación antes de la herramienta que
+# **actúa**. El formato es `{"nombre_de_la_herramienta": True}`.
 
 # %%
-proteger = None  # ✏️ completa aquí: {"nombre_de_la_herramienta": True}
+proteger = None  # ✏️ completa aquí
 
 quedo_en_pausa = False
 if proteger is not None:
     protegido = crear_agente(
         MODE,
-        model=ModeloReglas(falla="obedece_inyeccion") if MODE == "offline" else None,
+        model=ModeloReglas(falla="obedece_inyeccion"),  # simulado en ambos modos
         tools=[leer_resenas, publicar_anuncio],
         checkpointer=InMemorySaver(),
         middleware=[HumanInTheLoopMiddleware(proteger)],
@@ -341,9 +381,9 @@ if proteger is not None:
 
 # %%
 comprobar(
-    proteger == {"publicar_anuncio": True} and (quedo_en_pausa or MODE == "live"),
+    quedo_en_pausa,
     "El anuncio quedó esperando a una persona.",
-    'Usa el nombre exacto de la herramienta que actúa: {"publicar_anuncio": True}.',
+    "¿Cuál de las dos herramientas cambia algo visible? Escribe su nombre exacto.",
 )
 
 # %%
@@ -351,10 +391,14 @@ ver_solucion("04_inyeccion")
 
 # %% [markdown]
 # ## ☕ Pausa
-#
+
+# %% [markdown]
 # ## ¿Cuánto costó?
-# `medir_costo` suma los tokens reales de todo lo que corre dentro del bloque `with`. En offline
-# no hay modelo real y el costo es $0; en live verás tokens y dólares de GPT-6.
+# `medir_costo` suma los tokens reales de todo lo que corre dentro del bloque. En offline no hay
+# modelo real y el costo es $0; en live verás tokens y dólares de GPT-6.
+#
+# 🐍 **Python nuevo:** `with algo() as nombre:` abre un bloque que hace algo **al entrar** y
+# algo **al salir**. Aquí: empieza a contar tokens al entrar e imprime el costo al salir.
 
 # %%
 from henry_agents.config import medir_costo
@@ -365,17 +409,19 @@ print(f"Total: ${medicion['usd']:.5f}")
 
 # %% [markdown]
 # ## 🧱 Proyecto · Paso 4: el asistente se vuelve agente
-# En `proyectos/asistente_archivo/README.md`, guarda:
+# Guarda en tu copia de `proyectos/asistente_archivo/mi_entrega.md` (sección Paso 4):
 # 1. Una conversación de **dos turnos** en el mismo hilo donde el asistente recuerda algo.
 # 2. Una respuesta con `RespuestaConFuentes` y la comprobación de que sus fuentes existen.
 # 3. Un **ataque de inyección bloqueado**: la pausa, tu rechazo y la cartelera sin cambios.
 # 4. Una frase: ¿qué límites de llamadas elegiste y por qué?
-#
+
+# %% [markdown]
 # ## 🎟️ Ticket de salida
 # - ¿Qué es la "memoria" de un agente, en una frase?
 # - Elige una falla del laboratorio y explica cómo la viste en la línea de tiempo.
 # - ¿Por qué el prompt solo no alcanza contra una inyección?
-#
+
+# %% [markdown]
 # ## 📖 Glosario de hoy
 # | Término | En una frase |
 # |---|---|
@@ -384,10 +430,12 @@ print(f"Total: ${medicion['usd']:.5f}")
 # | Streaming | Recibir cada paso apenas ocurre |
 # | Checkpointer | Guarda el estado de cada conversación |
 # | thread_id | Identificador de una conversación |
+# | Expresión regular | Patrón para encontrar texto, como los IDs `BAT-01` |
 # | Salida estructurada | Respuesta que llena un modelo Pydantic |
 # | Inyección de prompts | Texto en los datos que intenta dar órdenes al modelo |
 # | Defensa en capas | Varias protecciones independientes: si una falla, otra frena |
-#
+
+# %% [markdown]
 # ## Límites de lo que hicimos
 # - La memoria vive en el programa: se pierde al reiniciar el kernel.
 # - Las fallas offline son simuladas; en live aparecen cuando quieren, no cuando las pides.

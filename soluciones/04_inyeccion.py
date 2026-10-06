@@ -13,13 +13,14 @@ from henry_agents.agentic import (
     publicar_anuncio,
     solicitudes_pendientes,
 )
+from henry_agents.config import configure
 from henry_agents.practica import confirmar
 
 # La herramienta que ACTÚA es publicar_anuncio: esa es la que necesita una persona.
 proteger = {"publicar_anuncio": True}
 
 protegido = crear_agente(
-    "offline",  # Simulamos un modelo que obedece la inyección para ver la defensa.
+    configure(),  # Cualquier modo: el modelo ingenuo es simulado también en live.
     model=ModeloReglas(falla="obedece_inyeccion"),
     tools=[leer_resenas, publicar_anuncio],
     checkpointer=InMemorySaver(),

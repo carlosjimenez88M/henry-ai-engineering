@@ -4,7 +4,7 @@
 #
 # **Vas a construir:**
 # - `buscar_archivo`: una herramienta con un **contrato** que rechaza entradas inválidas.
-# - El **bucle de un agente**, escrito por ti en unas 15 líneas.
+# - El **bucle de un agente**: lo lees completo (unas 15 líneas) y escribes su condición de parada.
 # - Pruebas que muestran cómo el bucle se corrige y cómo se detiene.
 #
 # **Necesitas:** la clase 0 y la ruta 1. Modo offline por defecto; live si el docente lo activa.
@@ -67,7 +67,8 @@ print("investigación:", buscar_minimo("investigación", catalogo))
 #
 # ### ✏️ Tu turno: filtrar por colección
 # Completa `es_de_la_coleccion` para que la función devuelva solo fichas de la colección
-# pedida. Pista: compara `ficha["universe"]` con `coleccion` usando `==`.
+# pedida. Pista: ¿qué campo de la ficha guarda su colección? ¿Con qué operador comparas dos
+# valores en Python?
 
 # %%
 def buscar_en_coleccion(palabra, coleccion, fichas):
@@ -89,7 +90,7 @@ from henry_agents.practica import comprobar, confirmar, ver_solucion
 comprobar(
     mi_resultado == ["BAT-01", "BAT-03"],
     "Solo quedan las dos fichas de Batman: el filtro funciona.",
-    "Si todavía aparece MUS-02, la condición sigue siendo True para todas las fichas.",
+    "Si todavía aparece MUS-02, ¿qué valor tiene es_de_la_coleccion para una canción?",
 )
 
 # %%
@@ -124,6 +125,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from henry_agents.agentic import en_espanol
+
 
 class SearchArgs(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
@@ -146,11 +149,13 @@ for entrada in pruebas:
     try:
         print("✅ Aceptada:", SearchArgs(**entrada).model_dump())
     except ValidationError as error:
-        print("⛔ Rechazada:", error.errors()[0]["loc"][0], "→", error.errors()[0]["msg"])
+        problema = error.errors()[0]
+        print("⛔ Rechazada:", problema["loc"][0], "→", en_espanol(problema["msg"]))
 
 # %% [markdown]
 # 🔍 **Observa:** la primera pasa (y se le quitan los espacios). Las otras se rechazan
-# **antes** de buscar, con un mensaje que dice qué campo falló. `SearchArgs(**entrada)`
+# **antes** de buscar, con un mensaje que dice qué campo falló. Pydantic escribe esos
+# mensajes en inglés; `en_espanol` los traduce para el curso. `SearchArgs(**entrada)`
 # significa "usa cada clave del diccionario como un campo".
 #
 # ## Error de entrada no es lo mismo que "no hay evidencia"
@@ -217,7 +222,7 @@ for campo, regla in buscar_archivo.args_schema.model_json_schema()["properties"]
 entrada_dj = {
     "query": None,  # ✏️ el tema
     "universe": None,  # ✏️ la colección de las canciones
-    "kind": None,  # ✏️ el tipo: canción
+    "kind": None,  # ✏️ el tipo: ¿qué valor exacto acepta el contrato? (mira la tabla)
     "top_k": 2,
 }
 resultado_dj = None
@@ -226,13 +231,13 @@ if None not in entrada_dj.values():
         resultado_dj = buscar_archivo.invoke(entrada_dj)
         print([(f["id"], f["title"]) for f in resultado_dj["hits"]])
     except ValidationError as error:
-        print("⛔ El contrato rechazó la entrada:", error.errors()[0]["msg"])
+        print("⛔ El contrato rechazó la entrada:", en_espanol(error.errors()[0]["msg"]))
 
 # %%
 comprobar(
     resultado_dj is not None and [f["id"] for f in resultado_dj["hits"]] == ["MUS-02"],
     "Encontraste MUS-02, «Pistas a medianoche», sin mezclar fichas.",
-    "Usa universe='canciones' y kind='cancion' (sin tilde: así lo pide el contrato).",
+    "¿Qué valores exactos aceptan `universe` y `kind` en la tabla del contrato? ¿Llevan tilde?",
 )
 
 # %%
@@ -288,6 +293,9 @@ REGLAS = (
 )
 
 
+AVISO_LIMITE = "Límite de pasos alcanzado: me detengo."
+
+
 def ejecutar_agente(pedido, modelo, herramientas, max_pasos=4):
     por_nombre = {h.name: h for h in herramientas}
     mensajes = [SystemMessage(REGLAS), HumanMessage(pedido)]
@@ -301,15 +309,19 @@ def ejecutar_agente(pedido, modelo, herramientas, max_pasos=4):
                 resultado = por_nombre[llamada["name"]].invoke(llamada["args"])
                 contenido, estado = json.dumps(resultado, ensure_ascii=False), "success"
             except Exception as error:  # el error vuelve al modelo, no rompe el programa
-                contenido, estado = f"Error: {error}", "error"
+                contenido, estado = f"Error: {en_espanol(str(error))}", "error"
             mensajes.append(
                 ToolMessage(contenido, tool_call_id=llamada["id"], name=llamada["name"], status=estado)
             )
-    mensajes.append(AIMessage(content="Límite de pasos alcanzado: me detengo."))
+    mensajes.append(AIMessage(content=AVISO_LIMITE))  # 4. lo agrega el PROGRAMA, no el modelo
     return mensajes
 
 
 # %% [markdown]
+# Fíjate en el paso 4: si se acaban los pasos, **el programa** agrega un aviso. En la línea de
+# tiempo aparece con 🛑 (programa), no con 🤖 (modelo): el modelo propone, el programa decide
+# cuándo parar.
+#
 # `cerebro(MODE)` es GPT-6 en live y `ModeloReglas` en offline. `.bind_tools([...])` le
 # muestra al modelo qué herramientas existen (nombre, descripción y esquema).
 
@@ -319,8 +331,8 @@ from henry_agents.agentic import ModeloReglas, cerebro, linea_de_tiempo
 modelo = cerebro(MODE).bind_tools([buscar_archivo])
 mensajes = ejecutar_agente("Busca fichas de investigación de Batman", modelo, [buscar_archivo])
 linea_de_tiempo(mensajes[1:])
-confirmar(any(m.type == "tool" for m in mensajes), "El agente debía usar la herramienta")
 if MODE == "offline":
+    confirmar(any(m.type == "tool" for m in mensajes), "El agente debía usar la herramienta")
     confirmar("[BAT-01]" in mensajes[-1].text, "La respuesta debía citar BAT-01")
 
 # %% [markdown]
@@ -329,7 +341,8 @@ if MODE == "offline":
 #
 # ## Cuando el modelo se equivoca
 # Los modelos reales a veces piden argumentos inválidos. `ModeloReglas(falla=...)` comete
-# ese error **a propósito**, siempre igual, para que puedas estudiarlo.
+# ese error **a propósito**, siempre igual, para que puedas estudiarlo. Lo usamos también
+# en live: así el error se reproduce sin depender de la suerte ni gastar dinero.
 #
 # 🔮 **Predice:** si el modelo pide `top_k=50`, ¿quién lo detiene y qué hace el modelo después?
 
@@ -349,15 +362,19 @@ linea_de_tiempo(mensajes[1:], ancho=110)
 atascado = ModeloReglas(falla="bucle").bind_tools([buscar_archivo])
 mensajes = ejecutar_agente("Busca fichas de investigación de Batman", atascado, [buscar_archivo], max_pasos=3)
 linea_de_tiempo(mensajes[1:], ancho=90)
-confirmar(mensajes[-1].text.startswith("Límite de pasos"), "El bucle debía cortarse por el límite")
+confirmar(mensajes[-1].text == AVISO_LIMITE, "El bucle debía cortarse por el límite")
+vueltas = [m for m in mensajes if m.type == "ai" and m.text != AVISO_LIMITE]
+print("Respuestas del modelo:", len(vueltas), "| aviso del programa: 1")
 
 # %% [markdown]
-# 🔍 **Observa:** sin `max_pasos`, este bucle no terminaría nunca y, en live, cada vuelta
+# 🔍 **Observa:** con `max_pasos=3` el modelo respondió 3 veces y luego **el programa**
+# agregó el aviso 🛑. Sin `max_pasos`, este bucle no terminaría nunca y, en live, cada vuelta
 # cuesta dinero. El límite es tu freno de mano.
 #
 # ### ✏️ Tu turno: la condición de parada
 # Este bucle no sabe cuándo terminar. Completa `termino`: debe ser verdadero cuando la
-# respuesta del modelo **no** pide herramientas. Pista: mira el paso 2 de `ejecutar_agente`.
+# respuesta del modelo **no** pide herramientas. Pista: ¿qué contiene `respuesta.tool_calls`
+# cuando no hay pedidos? Compara con el paso 2 de `ejecutar_agente`.
 
 # %%
 def mi_bucle(pedido, modelo, herramientas, max_pasos=4):
@@ -370,23 +387,29 @@ def mi_bucle(pedido, modelo, herramientas, max_pasos=4):
         if termino:
             return mensajes
         for llamada in respuesta.tool_calls:
-            resultado = por_nombre[llamada["name"]].invoke(llamada["args"])
+            try:
+                resultado = por_nombre[llamada["name"]].invoke(llamada["args"])
+                contenido, estado = json.dumps(resultado, ensure_ascii=False), "success"
+            except Exception as error:
+                contenido, estado = f"Error: {en_espanol(str(error))}", "error"
             mensajes.append(
-                ToolMessage(json.dumps(resultado, ensure_ascii=False), tool_call_id=llamada["id"], name=llamada["name"])
+                ToolMessage(contenido, tool_call_id=llamada["id"], name=llamada["name"], status=estado)
             )
-    mensajes.append(AIMessage(content="Límite de pasos alcanzado: me detengo."))
+    mensajes.append(AIMessage(content=AVISO_LIMITE))
     return mensajes
 
 
-mis_mensajes = mi_bucle("Busca fichas de cooperación de El Chavo", cerebro(MODE).bind_tools([buscar_archivo]), [buscar_archivo])
-respuestas_del_modelo = [m for m in mis_mensajes if m.type == "ai"]
-print("Vueltas del modelo:", len(respuestas_del_modelo), "| último mensaje:", mis_mensajes[-1].text[:80])
+modelo_chavo = cerebro(MODE).bind_tools([buscar_archivo])
+mis_mensajes = mi_bucle("Busca fichas de cooperación de El Chavo", modelo_chavo, [buscar_archivo])
+respuestas_del_modelo = [m for m in mis_mensajes if m.type == "ai" and m.text != AVISO_LIMITE]
+print("Respuestas del modelo:", len(respuestas_del_modelo), "(sin contar el aviso del programa)")
+print("Último mensaje:", mis_mensajes[-1].text[:80])
 
 # %%
 comprobar(
-    not mis_mensajes[-1].text.startswith("Límite de pasos") and len(respuestas_del_modelo) <= 3,
+    mis_mensajes[-1].text != AVISO_LIMITE and len(respuestas_del_modelo) <= 3,
     "Tu bucle termina apenas el modelo responde, sin gastar vueltas de más.",
-    "Usa `not respuesta.tool_calls`: una lista vacía significa que no pidió herramientas.",
+    "¿Tu condición es verdadera cuando la lista de pedidos está vacía? ¿Qué devuelve `not []`?",
 )
 
 # %%
@@ -394,12 +417,14 @@ ver_solucion("01_condicion_de_parada")
 
 # %% [markdown]
 # ## 🧱 Proyecto · Paso 1: la herramienta del asistente
-# Con `buscar_archivo` y `ejecutar_agente`, guarda en tu cuaderno de proyecto:
+# Con `buscar_archivo` y `ejecutar_agente`, completa el **Paso 1** de tu copia de
+# `proyectos/asistente_archivo/mi_entrega.md`:
 # 1. Una llamada válida a la herramienta y su resultado.
 # 2. Una llamada que el contrato rechaza, con el mensaje de error.
 # 3. La línea de tiempo de un pedido tuyo, señalando qué decidió el modelo y qué ejecutó tu
 #    programa.
-#
+
+# %% [markdown]
 # ## 🎟️ Ticket de salida
 # - ¿Qué diferencia hay entre `no_results` y un `ValidationError`?
 # - ¿Por qué el bucle devuelve el error al modelo en lugar de detenerse?
@@ -418,8 +443,10 @@ ver_solucion("01_condicion_de_parada")
 # | *Tool call* | Pedido del modelo: nombre de herramienta + argumentos + id |
 # | `ToolMessage` | Respuesta del programa a un *tool call*, con el mismo id |
 # | Bucle del agente | Repetir: el modelo decide, el programa ejecuta, hasta terminar |
-#
+
+# %% [markdown]
 # ## Límites de lo que hicimos
 # - La búsqueda compara palabras: los sinónimos que no conoce no los encuentra (clase 2).
 # - Nuestro bucle no guarda conversaciones ni muestra el progreso en vivo (clase 4).
-# - `max_pasos` limita vueltas, no dinero: el gasto se controla también en la cuenta de OpenAI.
+# - `max_pasos` limita vueltas, no dinero: configura también límites y alertas de gasto en
+#   tu proyecto de OpenAI.

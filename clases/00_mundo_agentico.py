@@ -83,7 +83,7 @@ print("Modelo de las clases:", model_name(), "| Modelo coordinador:", model_name
 
 # %% [markdown]
 # **Workflow vs. agente.** En la ruta 1 hiciste *workflows*: una **receta** con pasos fijos.
-# Un agente es un **cocinero** que mira la heladera y decide. Es más flexible, pero más caro,
+# Un agente es un **cocinero** que mira el refrigerador y decide. Es más flexible, pero más caro,
 # más lento y más difícil de probar. Usa la receta cuando alcance.
 #
 # **Orquestación:** organizar quién hace qué, en qué orden y cómo se juntan los resultados.
@@ -101,8 +101,10 @@ print("Modelo de las clases:", model_name(), "| Modelo coordinador:", model_name
 # | Workflow en LangGraph | El código (reglas y rutas) | 3 |
 # | Agente | **El modelo**, con límites | 4 |
 # | Equipo de agentes | Un supervisor | 5 |
-# | Evaluación y aprobación humana | Un evaluador y una persona | 6 |
 # | Deep agent | Un coordinador que planifica y delega | 7 |
+#
+# **Control, no autonomía:** evaluar resultados y pedir aprobación humana (clase 6) no es un
+# escalón más. Son frenos que se suman a **cualquier** escalón.
 #
 # 🔮 **Predice:** ¿por qué no empezar siempre por el escalón más alto?
 #
@@ -149,7 +151,7 @@ if llamadas_totales:
 comprobar(
     llamadas_totales == 3000,
     "Son 3.000 llamadas: con Luna ≈ $1.65 y con Astra ≈ $165. Elegir modelo es ingeniería.",
-    "Multiplica las tres cantidades: 30 * 20 * 5.",
+    "¿Qué operación combina personas, consultas por persona y llamadas por consulta?",
 )
 
 # %%
@@ -182,9 +184,10 @@ print("Tokens:", respuesta.usage_metadata or "no aplica en offline")
 
 # %% [markdown]
 # 🔍 **Observa:**
-# - En offline responde `reglas-offline`: saluda porque una regla detectó "me llamo".
-# - En live responde `gpt-6-luna` y `usage_metadata` muestra los tokens reales: con eso se
-#   calcula el costo exacto.
+# - En offline responde `reglas-offline`: una regla detecta "me llamo" y "¿qué es un
+#   agente?" y devuelve una definición guardada de antemano.
+# - En live responde un modelo cuyo nombre empieza con `gpt-6-luna` (la API agrega una
+#   fecha de versión) y `usage_metadata` muestra los tokens reales: con eso se calcula el costo.
 # - El *system prompt* cambia el comportamiento, pero **no es una barrera de seguridad**.
 #   Los límites reales van en el código, como verás en la clase 4.
 
@@ -234,7 +237,7 @@ print("✅ El agente buscó antes de responder.")
 # %% [markdown]
 # ### ✏️ Tu turno: cambia el pedido
 # Un agente **sigue tu pedido**. Escribe un pedido sobre **cooperación** en la colección
-# **El Chavo** y ejecuta. Si sale bien, la respuesta cita una ficha que empieza con `CHA-`.
+# **El Chavo** y ejecuta. Si sale bien, la búsqueda devuelve fichas que empiezan con `CHA-`.
 
 # %%
 mi_pedido = None  # ✏️ completa aquí, por ejemplo: "Busca fichas de ... de ..."
@@ -245,10 +248,13 @@ if mi_pedido:
     linea_de_tiempo(mi_resultado["messages"])
 
 # %%
+observado = ""
+if mi_resultado is not None:
+    observado = " ".join(m.text for m in mi_resultado["messages"] if m.type == "tool")
 comprobar(
-    mi_resultado is not None and "CHA-" in mi_resultado["messages"][-1].text,
-    "El agente buscó en la colección que pediste y citó una ficha de El Chavo.",
-    "Escribe un texto entre comillas que mencione 'cooperación' y 'El Chavo'.",
+    "CHA-" in observado,
+    "El agente buscó en la colección que pediste y encontró fichas de El Chavo.",
+    "¿Tu pedido nombra el tema y la colección? ¿Lo escribiste entre comillas?",
 )
 
 # %%
@@ -280,14 +286,14 @@ mis_respuestas = {
     5: "workflow",
 }
 
+# %% [markdown]
+# La celda siguiente compara con una clave guardada **fuera** del notebook: solo te dice qué
+# casos repensar. En cada uno pregúntate: ¿sé de antemano qué pasos vendrán?
+
 # %%
-claves = {1: "workflow", 2: "agente", 3: "workflow", 4: "agente", 5: "workflow"}
-aciertos = sum(mis_respuestas[n] == claves[n] for n in claves)
-comprobar(
-    aciertos == 5,
-    "Las cinco son correctas. Lo importante es poder decir por qué.",
-    f"Llevas {aciertos} de 5. Pregúntate en cada caso: ¿sé qué pasos vendrán?",
-)
+from henry_agents.practica import revisar
+
+revisar("00_workflow_o_agente", mis_respuestas)
 
 # %%
 ver_solucion("00_workflow_o_agente")
@@ -297,16 +303,18 @@ ver_solucion("00_workflow_o_agente")
 # Abre `proyectos/asistente_archivo/README.md`. El Centro Cultural pide un asistente que
 # busque fichas citando IDs, no invente, prepare actividades y no guarde nada sin aprobación.
 #
-# **Entrega:** una tabla con cada requisito del encargo, el escalón de autonomía que necesita
-# y una razón de una línea. Ejemplo: "Citar IDs → herramienta con contrato (clase 1): los IDs
-# los devuelve el programa, no el modelo".
+# **Entrega:** haz una copia personal de `proyectos/asistente_archivo/mi_entrega.md`
+# (por ejemplo, `mi_entrega_ana.md`) y completa la tabla del **Paso 0**: cada requisito, el
+# escalón que necesita y una razón de una línea. Ejemplo: "Citar IDs → herramienta con
+# contrato (clase 1): los IDs los devuelve el programa, no el modelo".
 
 # %% [markdown]
 # ## 🎟️ Ticket de salida
 # - En un *tool call*, ¿qué hace el modelo y qué hace el programa?
 # - Nombra un problema de tu trabajo para un workflow y otro para un agente.
 # - ¿Qué modelo GPT-6 elegirías para clasificar 10.000 mensajes cortos, y por qué?
-#
+
+# %% [markdown]
 # ## 📖 Glosario de hoy
 # | Término | En una frase |
 # |---|---|
@@ -320,7 +328,8 @@ ver_solucion("00_workflow_o_agente")
 # | Orquestación | Organizar quién hace qué, en qué orden y cómo se unen los resultados |
 # | Middleware | Pieza que corre antes o después del modelo, por ejemplo para contar llamadas |
 # | Esfuerzo de razonamiento | Cuánto "piensa" el modelo antes de responder |
-#
+
+# %% [markdown]
 # ## Límites de lo que hicimos
 # - En offline, el cerebro son reglas: entiende pocos tipos de pedido.
 # - Los precios son de octubre de 2026; revísalos antes de calcular costos reales.
