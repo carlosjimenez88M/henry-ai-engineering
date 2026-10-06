@@ -1,0 +1,20 @@
+{
+  // Configuración compartida del curso. Abrí ESTA carpeta en VS Code (File → Open Folder).
+  // Python del curso: lo crea `uv sync`. En Windows, VS Code detecta .venv\Scripts\python.exe.
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.terminal.activateEnvironment": true,
+  "python.envFile": "${workspaceFolder}/.env",
+  // Los notebooks se ejecutan desde la raíz del proyecto, igual que en la verificación.
+  "jupyter.notebookFileRoot": "${workspaceFolder}",
+  "notebook.lineNumbers": "on",
+  "notebook.output.scrolling": true,
+  "notebook.output.textLineLimit": 60,
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "files.exclude": {
+    "**/__pycache__": true,
+    ".pytest_cache": true,
+    ".ruff_cache": true
+  }
+}

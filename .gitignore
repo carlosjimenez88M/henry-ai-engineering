@@ -111,7 +111,10 @@ jupyter_runtime/
 # Archivos temporales, respaldos y ajustes personales del editor.
 /tmp/
 /temp/
-.vscode/
+.vscode/*
+# Configuración compartida del curso para VS Code: sí se versiona.
+!.vscode/settings.json
+!.vscode/extensions.json
 .idea/
 *.swp
 *.swo

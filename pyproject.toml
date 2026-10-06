@@ -21,6 +21,8 @@ dependencies = [
   "pandas>=3.0.6",
   "isort>=9.0.2",
   "autopep8>=2.3.2",
+  "deepagents>=0.7,<0.8",
+  "grandalf>=0.8,<1",
 ]
 [dependency-groups]
 dev = ["pytest>=8,<10", "httpx>=0.28,<1", "ruff>=0.11,<1"]

@@ -34,8 +34,11 @@
 # No necesitás conocer estos personajes para resolver las actividades.
 #
 # **Dos modos:** offline usa búsqueda real y grafos reales, pero sustituye al LLM por
-# reglas/extractos explícitos. Live usa OpenAI y consume API. El estudiante puede
+# reglas/extractos explícitos. Live usa OpenAI (GPT-6) y consume API. El estudiante puede
 # hacer toda la práctica offline; el docente demuestra live. No compartas el .env.
+#
+# **En VS Code:** elegí el kernel `.venv` (arriba a la derecha), ejecutá con Shift + Enter
+# y, si cambiás el `.env`, reiniciá el kernel. Conceptos base y glosario: clase 0.
 
 # %% [markdown]
 # ## Recordamos con una predicción
@@ -219,17 +222,32 @@ print("Campos que devuelve buscar:", list(actualizacion))
 # registran nodos, después aristas y al final compile prepara la ejecución.
 
 # %%
+# 1) Crear el grafo: le decimos qué forma tiene el estado que viaja entre pasos.
 secuencia = StateGraph(EstadoRAG)
+# 2) Registrar los nodos: un nombre y la función que se ejecuta en ese paso.
 secuencia.add_node("buscar", nodo_buscar)
 secuencia.add_node("responder", nodo_responder)
+# 3) Dibujar el mapa: las aristas dicen qué paso sigue a cuál.
 secuencia.add_edge(START, "buscar")
 secuencia.add_edge("buscar", "responder")
 secuencia.add_edge("responder", END)
+# 4) Compilar: revisa que el mapa tenga sentido y lo deja listo para ejecutar.
 app_secuencial = secuencia.compile()
+# 5) Ejecutar con un estado inicial.
 resultado = app_secuencial.invoke({"query": consulta, "universe": "batman"})
 assert resultado["query"] == consulta
 assert resultado["sources"]
 print(resultado["answer"])
+
+# %% [markdown]
+# LangGraph puede dibujar el grafo que acabamos de construir. Compará el dibujo con el
+# diagrama de texto de arriba. Con Internet aparece una imagen; sin conexión, un dibujo
+# en texto. Ambos muestran lo mismo: nodos y flechas.
+
+# %%
+from henry_agents.agentic import mostrar_grafo
+
+mostrar_grafo(app_secuencial)
 
 # %% [markdown]
 # **Modificación guiada:** cambien la colección a canciones y busquen
@@ -268,6 +286,7 @@ constructor.add_conditional_edges("buscar", elegir_ruta, ["responder", "abstener
 constructor.add_edge("responder", END)
 constructor.add_edge("abstenerse", END)
 app = constructor.compile()
+mostrar_grafo(app)
 
 # %%
 sin_evidencia = app.invoke({"query": "vacuna marciana", "universe": "todos"})

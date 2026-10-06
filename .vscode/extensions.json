@@ -1,0 +1,10 @@
+{
+  // VS Code ofrece instalar estas extensiones al abrir la carpeta. Jupyter es OBLIGATORIA
+  // para ejecutar los notebooks (.ipynb); Python permite elegir el entorno .venv.
+  "recommendations": [
+    "ms-python.python",
+    "ms-toolsai.jupyter",
+    "ms-python.vscode-pylance",
+    "charliermarsh.ruff"
+  ]
+}
