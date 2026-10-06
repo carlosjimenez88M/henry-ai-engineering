@@ -1,337 +1,327 @@
 # %% [markdown]
 # # Clase 0 · Bienvenida al mundo agéntico
+# ¿Qué es un agente de IA y cuándo **no** conviene usar uno?
 #
-# Esta clase no exige saber programar. Vamos a entender **qué es un agente de IA**,
-# en qué se diferencia de un chatbot y de un programa común, y a dejar el entorno
-# funcionando en VS Code. Todo lo que hagamos después se apoya en estas ideas.
+# **Vas a construir:**
+# - Un entorno que funciona en VS Code, comprobado por ti.
+# - Tu primera conversación con un modelo y con un agente, leída paso a paso.
+# - Un criterio para elegir el nivel de autonomía y el modelo según tarea y costo.
 #
-# **Al terminar vas a poder:**
-# - Explicar con tus palabras qué es un LLM, una herramienta, un agente y un workflow.
-# - Ubicar un problema en la "escalera de autonomía" y elegir el nivel más simple que alcanza.
-# - Elegir un modelo de OpenAI según tarea y costo, y estimar cuánto cuesta una llamada.
-# - Ver un agente real en acción y leer, paso a paso, qué decidió y qué ejecutó.
-#
-# **Recorrido de la clase**
-#
-# - Comprobar que el notebook usa el entorno correcto
-# - Cinco palabras clave con analogías: LLM, token, prompt, herramienta, agente
-# - Escalera de autonomía: de una pregunta suelta a un equipo de agentes
-# - Pausa
-# - Los modelos GPT-6 de OpenAI: cuál usar, cuánto cuesta y qué es el "esfuerzo de razonamiento"
-# - Primera llamada a un modelo (o a su guion offline)
-# - Un agente completo en tres líneas, y su línea de tiempo
-# - Pausa
-# - Taller: ¿workflow o agente? Clasificar cinco situaciones
-# - Glosario y ticket de salida
-#
-# ### Cómo usar este notebook en VS Code
-# 1. Arriba a la derecha, en **Select Kernel / Seleccionar kernel**, elegí el entorno
-#    `.venv` de esta carpeta (aparece como `.venv (Python 3.13)`). Si no aparece, mirá
-#    `docs/INSTALACION.md`.
-# 2. Ejecutá una celda con **Shift + Enter**. El número entre corchetes indica el orden.
-# 3. Si algo falla, no te asustes: leé la **última línea** del error. Casi siempre dice qué pasó.
-# 4. Si cambiás el archivo `.env`, reiniciá el kernel (botón **Restart**).
+# **Necesitas:** la [ruta 1 · La Esquina](agentic_workflows/README.md) (Python y workflows).
+# Modo offline por defecto; live si el docente lo activa.
 
 # %% [markdown]
-# ## Paso 1 · ¿Estamos en el entorno correcto?
-# Un **entorno virtual** (`.venv`) es una carpeta con su propio Python y sus propias
-# librerías, separada del resto del computador. Así todas las personas del curso usan
-# exactamente las mismas versiones. Si el notebook no usa `.venv`, aparecen errores
-# como `ModuleNotFoundError: No module named 'henry_agents'`.
+# **Recorrido**
+# - Comprobar el entorno
+# - Seis ideas clave, con analogías
+# - La escalera de autonomía
+# - ☕ Pausa
+# - Modelos GPT-6 y cuánto cuestan
+# - Primera llamada a un modelo
+# - Un agente en acción, y tú cambias el pedido
+# - ☕ Pausa
+# - Taller: ¿workflow o agente?
+# - Proyecto, ticket y glosario
+
+# %% [markdown]
+# ## Comprobar el entorno
+# El **kernel** es el programa de Python que ejecuta las celdas. Debe ser el del curso:
+# la carpeta `.venv`. Si no lo es, arriba a la derecha elige **Select Kernel → .venv**.
 #
-# **Predicción:** ¿qué ruta esperás ver en "Python que ejecuta este notebook"?
+# 🔮 **Predice:** ¿la ruta que vas a ver contiene `.venv`?
 
 # %%
-import importlib.metadata
 import sys
 
-print("Versión de Python:", sys.version.split()[0])
-print("Python que ejecuta este notebook:", sys.executable)
-if ".venv" in sys.executable:
-    print("✅ Estás usando el entorno .venv del curso.")
-else:
-    print("⚠️ Este kernel no es el .venv del curso. Cambialo en 'Select Kernel'.")
-for paquete in ["langchain", "langgraph", "langchain-openai", "deepagents"]:
-    print(f"   {paquete:18} {importlib.metadata.version(paquete)}")
+from henry_agents.practica import comprobar
+
+print("Python:", sys.version.split()[0])
+print("Ejecutable:", sys.executable)
+comprobar(
+    ".venv" in sys.executable,
+    "Estás usando el entorno del curso.",
+    "Cambia el kernel a .venv (Select Kernel) y vuelve a ejecutar.",
+)
 
 # %% [markdown]
-# Ahora cargamos la configuración del curso. Hay **dos modos**:
+# El curso tiene dos **modos**:
+# - **offline** (gratis): herramientas y grafos reales; el "cerebro" son **reglas** visibles.
+# - **live** (docente): el cerebro es un modelo real de OpenAI (GPT-6) y cuesta dinero.
 #
-# | Modo | Qué usa | Costo | Para quién |
-# |---|---|---|---|
-# | `offline` (por defecto) | Herramientas y grafos reales; el "cerebro" es un **guion** escrito de antemano | Gratis | Todas las personas |
-# | `live` | Modelos reales de OpenAI | Consume saldo de la API | Docente o quien tenga clave |
-#
-# Offline no es "de mentira": la búsqueda, los grafos, los límites y las aprobaciones
-# son los mismos. Solo cambia quién toma las decisiones: un guion en lugar del modelo.
+# El modo se lee del archivo `.env`. Si lo cambias, reinicia el kernel (botón **Restart**).
 
 # %%
-from henry_agents.config import MODELOS_OPENAI, configure, model_name
+from henry_agents.config import configure, model_name
 
 MODE = configure()
 print("Modo:", MODE)
-print("Modelo para clases 0–4:", model_name())
-print("Modelo para deep agents (clase 5):", model_name("agent"))
+print("Modelo de las clases:", model_name(), "| Modelo coordinador:", model_name("agent"))
 
 # %% [markdown]
-# ## Cinco palabras clave, con analogías
+# ## Seis ideas clave
+# **LLM** (*Large Language Model*): un programa que, dado un texto, predice cómo seguirlo.
+# Es un autocompletado muy bueno: escribe con fluidez, pero **puede inventar** con seguridad.
 #
-# **1. LLM (Large Language Model, modelo de lenguaje).** Un programa entrenado con
-# muchísimo texto que, dado un texto de entrada, **predice cómo continuarlo**. Es como
-# un autocompletado extremadamente bueno. Consecuencias importantes:
-# - Escribe con fluidez, pero **puede inventar** datos con total seguridad ("alucinar").
-# - No sabe qué hay en *tus* archivos ni en Internet, salvo que se lo des o le des una herramienta.
-# - No "recuerda" conversaciones anteriores: cada llamada recibe todo el contexto de nuevo.
+# **Token:** el pedacito de palabra con el que el modelo lee y escribe. Se paga por token.
 #
-# **2. Token.** La unidad en que el modelo lee y escribe: pedazos de palabra. En
-# español, 100 palabras ≈ 130–150 tokens. **Se paga por token**, de entrada y de salida.
+# **Prompt:** lo que le envías al modelo. El *system prompt* fija las reglas; el mensaje
+# de la persona trae el pedido.
+
+# %% [markdown]
+# **Herramienta** (*tool*): una función de **tu programa** que el modelo puede *pedir*.
+# Regla de oro: **el modelo propone, el programa ejecuta.**
 #
-# **3. Prompt.** Lo que le enviamos al modelo. Suele tener dos partes:
-# - *System*: las reglas del juego ("Respondé solo con la evidencia dada").
-# - *Human/User*: el pedido concreto ("¿Qué ficha habla de investigación?").
-#
-# **4. Herramienta (tool).** Una función de **nuestro programa** que el modelo puede
-# *pedir* usar: buscar en un catálogo, consultar una base de datos, escribir un archivo.
-# Regla de oro: **el modelo propone, el programa ejecuta.** El modelo nunca toca nada
-# directamente; nosotros decidimos qué herramientas existen y qué límites tienen.
-#
-# **5. Agente.** Un LLM que trabaja **en un bucle**: piensa qué hacer, pide una
-# herramienta, mira el resultado y decide si sigue o responde.
+# **Agente:** un modelo que trabaja en un **bucle**: decide, pide una herramienta, mira el
+# resultado y vuelve a decidir, hasta responder.
 #
 # ```text
-#        ┌──────────────────────────────────────────────┐
-#        ▼                                              │
-#  pedido → MODELO decide ──¿necesita una herramienta?── sí → PROGRAMA ejecuta → observación
-#                 │
-#                 └── no → respuesta final
+# pedido → modelo decide ─¿herramienta?─ sí → programa ejecuta → resultado ─┐
+#              ▲                                                            │
+#              └────────────────────────────────────────────────────────────┘
+#              └─ no → respuesta final
 # ```
+
+# %% [markdown]
+# **Workflow vs. agente.** En la ruta 1 hiciste *workflows*: una **receta** con pasos fijos.
+# Un agente es un **cocinero** que mira la heladera y decide. Es más flexible, pero más caro,
+# más lento y más difícil de probar. Usa la receta cuando alcance.
 #
-# **Analogía:** un *workflow* es una **receta** (pasos fijos, en orden). Un *agente* es
-# un **cocinero** que mira la heladera, decide qué cocinar y prueba antes de servir.
-# El cocinero es más flexible, pero también más caro, más lento y más difícil de predecir.
-# Por eso, en ingeniería, **usamos la receta cuando alcanza** y el cocinero cuando hace falta.
+# **Orquestación:** organizar quién hace qué, en qué orden y cómo se juntan los resultados.
+# **LangGraph** es la librería que usamos para eso. **Deep Agents** es un agente "con oficio"
+# construido sobre LangGraph: planifica, toma notas en archivos y delega en ayudantes.
 
 # %% [markdown]
 # ## La escalera de autonomía
-# No todo problema necesita un agente. Subimos un escalón solo cuando el anterior no alcanza.
+# Sube un escalón solo si el anterior no alcanza. Cada escalón es una clase de esta ruta.
 #
-# | Escalón | Qué es | Quién decide el próximo paso | Ejemplo | Clase |
-# |---|---|---|---|---|
-# | 0 · Llamada única | Un prompt, una respuesta | Nadie: hay un solo paso | Resumir un texto | 0 |
-# | 1 · Herramienta | Función con contrato que el modelo puede pedir | El programa valida y ejecuta | Buscar fichas con filtros | 1 |
-# | 2 · Workflow | Pasos fijos o con reglas (secuencia, routing) | El código | Buscar → responder o abstenerse | 2 |
-# | 3 · Orquestación | Varias tareas en paralelo, plan y reparto | El código y un plan | Consultar tres colecciones a la vez | 3 |
-# | 4 · Agente | Bucle modelo → herramienta → modelo | **El modelo**, con límites | Investigar hasta tener evidencia | 3 |
-# | 5 · Revisión | Ciclos de corrección y aprobación humana | Un evaluador y una persona | Aprobar antes de entregar | 4 |
-# | 6 · Deep agent | Agente que planifica, usa archivos y delega en subagentes | El modelo coordinador | Preparar una actividad completa | 5 |
+# | Escalón | Quién decide el siguiente paso | Clase |
+# |---|---|---|
+# | Herramienta con contrato | Tu programa valida y ejecuta | 1 |
+# | Respuesta con evidencia (RAG) | Tu programa busca; el modelo redacta | 2 |
+# | Workflow en LangGraph | El código (reglas y rutas) | 3 |
+# | Agente | **El modelo**, con límites | 4 |
+# | Equipo de agentes | Un supervisor | 5 |
+# | Evaluación y aprobación humana | Un evaluador y una persona | 6 |
+# | Deep agent | Un coordinador que planifica y delega | 7 |
 #
-# **Orquestación** significa organizar quién hace qué, en qué orden y cómo se juntan
-# los resultados. **LangGraph** es la librería que usamos para orquestar: dibujamos el
-# trabajo como un **grafo** (nodos = pasos, aristas = flechas entre pasos).
-# **Deep Agents** es una librería construida *sobre* LangGraph que trae un agente
-# "con oficio": planifica, toma notas en archivos y delega en ayudantes.
+# 🔮 **Predice:** ¿por qué no empezar siempre por el escalón más alto?
 #
-# **Pregunta para discutir:** ¿por qué no empezar siempre por el escalón 6, si es el
-# más potente? Pensá en costo, velocidad, errores difíciles de rastrear y pruebas.
-#
-# ## Pausa
+# ## ☕ Pausa
 
 # %% [markdown]
-# ## Los modelos de OpenAI que usamos (GPT-6)
-# OpenAI ofrece una familia con tres niveles. Todos entienden herramientas, devuelven
-# salidas estructuradas y tienen una ventana de contexto de alrededor de un millón de tokens.
-# Los precios son por **millón de tokens** (entrada / salida), consultados en octubre de 2026;
-# cambian con el tiempo, así que el docente los revisa antes de cada cohorte.
+# ## Modelos GPT-6 y cuánto cuestan
+# OpenAI ofrece tres niveles. Los precios son por **millón de tokens** (entrada / salida)
+# y cambian con el tiempo: el docente los revisa antes de cada cohorte.
 #
-# | Modelo | Para qué | Entrada | Salida |
-# |---|---|---|---|
-# | `gpt-6-luna` | Tareas acotadas y muchas llamadas: clasificar, extraer, agentes simples | $0.10 | $0.50 |
-# | `gpt-6.1-sol` | Agentes con varias herramientas, coordinadores, deep agents | $2 | $10 |
-# | `gpt-6-astra` | Problemas largos y difíciles; usar con criterio | $10 | $50 |
-#
-# **Esfuerzo de razonamiento** (`reasoning_effort`): estos modelos pueden "pensar"
-# antes de responder. Más esfuerzo = mejores respuestas en problemas difíciles, pero
-# más tokens, más tiempo y más costo. Valores: `none` (solo Luna), `low`, `medium`,
-# `high`, `xhigh`, `max`. El curso usa `low` por defecto; se cambia en `.env`.
-#
-# **Regla práctica de ingeniería:** empezá con el modelo más económico que pase tus
-# pruebas. Subí de nivel solo donde haya evidencia de que hace falta. En la clase 5
-# combinamos: Sol coordina y Luna hace las tareas de los especialistas.
+# **Esfuerzo de razonamiento** (*reasoning effort*): cuánto "piensa" el modelo antes de
+# responder. Más esfuerzo = mejores respuestas difíciles, pero más tokens y más costo.
+# El curso usa `low`.
 
 # %%
-for nombre, uso in MODELOS_OPENAI.items():
-    print(f"{nombre:12} → {uso}")
+from henry_agents.config import MODELOS, costo_usd
 
-PRECIOS = {  # USD por millón de tokens: (entrada, salida)
-    "gpt-6-luna": (0.10, 0.50),
-    "gpt-6.1-sol": (2.00, 10.00),
-    "gpt-6-astra": (10.00, 50.00),
-}
-
-
-def costo_estimado(modelo, tokens_entrada, tokens_salida):
-    entrada, salida = PRECIOS[modelo]
-    return (tokens_entrada * entrada + tokens_salida * salida) / 1_000_000
-
-
-# Un agente típico de clase: ~3.000 tokens de entrada y ~500 de salida por llamada.
-for modelo in PRECIOS:
-    print(f"{modelo:12} 1 llamada ≈ ${costo_estimado(modelo, 3000, 500):.5f}")
+for nombre, datos in MODELOS.items():
+    entrada, salida = datos["precio"]
+    print(f"{nombre:12} ${entrada:>5} / ${salida:>5}  → {datos['uso']}")
 
 # %% [markdown]
-# **Ejercicio rápido:** un curso de 30 personas ejecuta un agente que hace 5 llamadas
-# por consulta, 20 consultas cada una. ¿Cuánto cuesta con Luna y con Astra?
-# Escribí tu estimación antes de ejecutar. La diferencia es la razón por la que
-# **elegir el modelo es una decisión de ingeniería**, no de gusto.
+# Un agente típico de clase usa unos 3.000 tokens de entrada y 500 de salida por llamada.
+#
+# 🔮 **Predice:** ¿cuántas veces más caro es Astra que Luna para la misma llamada?
 
 # %%
-llamadas_totales = 30 * 20 * 5
-for modelo in ["gpt-6-luna", "gpt-6-astra"]:
-    total = llamadas_totales * costo_estimado(modelo, 3000, 500)
-    print(f"{modelo:12} {llamadas_totales} llamadas ≈ ${total:.2f}")
+for nombre in MODELOS:
+    print(f"{nombre:12} una llamada ≈ ${costo_usd(nombre, 3000, 500):.5f}")
 
 # %% [markdown]
+# ### ✏️ Tu turno: el costo de un curso
+# Un curso de 30 personas hace 20 consultas cada una, y cada consulta hace 5 llamadas.
+# Completa `llamadas_totales` (una multiplicación) y ejecuta. La celda siguiente revisa.
+
+# %%
+llamadas_totales = None  # ✏️ completa aquí: 30 personas × 20 consultas × 5 llamadas
+
+if llamadas_totales:
+    for nombre in ["gpt-6-luna", "gpt-6-astra"]:
+        print(f"{nombre:12} ≈ ${llamadas_totales * costo_usd(nombre, 3000, 500):.2f}")
+
+# %%
+comprobar(
+    llamadas_totales == 3000,
+    "Son 3.000 llamadas: con Luna ≈ $1.65 y con Astra ≈ $165. Elegir modelo es ingeniería.",
+    "Multiplica las tres cantidades: 30 * 20 * 5.",
+)
+
+# %%
+from henry_agents.practica import ver_solucion
+
+ver_solucion("00_costo_curso")
+
+# %% [markdown]
+# **Regla práctica:** empieza con el modelo más barato que pase tus pruebas. En la clase 7
+# combinamos: Sol coordina y Luna hace las tareas acotadas de los especialistas.
+#
 # ## Primera llamada a un modelo
-# Enviamos dos mensajes: reglas (*system*) y pedido (*human*). En modo `live` responde
-# GPT-6 de verdad. En `offline` responde un **guion**: un modelo falso que devuelve un
-# texto preparado. Lo usamos para practicar sin costo, y lo decimos con claridad.
-#
-# `respuesta.text` es el texto visible. En `live`, `usage_metadata` muestra cuántos
-# tokens se usaron: con eso se calcula el costo real.
+# Enviamos dos mensajes: reglas (*system*) y pedido (*human*). `cerebro(MODE)` devuelve
+# GPT-6 en live y, en offline, `ModeloReglas`: un cerebro de **reglas escritas a mano**.
+# No es inteligencia artificial: te lo decimos para que siempre sepas qué estás viendo.
 
 # %%
-from langchain_core.messages import AIMessage
+from henry_agents.agentic import cerebro
 
-from henry_agents.agentic import ModeloGuionado
-from henry_agents.config import chat_model
-
-mensajes = [
-    ("system", "Sos un profesor paciente. Respondé en dos oraciones, sin tecnicismos."),
-    ("human", "¿Qué es un agente de IA?"),
-]
-if MODE == "live":
-    modelo = chat_model()
-else:
-    modelo = ModeloGuionado(
-        pasos=[
-            AIMessage(
-                content="(Guion offline) Un agente de IA es un programa que usa un modelo de "
-                "lenguaje para decidir qué acciones tomar, como buscar información, y repite "
-                "hasta cumplir un objetivo. Siempre trabaja con herramientas y límites que "
-                "definen las personas que lo construyen."
-            )
-        ]
-    )
-respuesta = modelo.invoke(mensajes)
-print(respuesta.text)
-print("Tokens usados:", respuesta.usage_metadata or "no aplica en modo offline")
+modelo = cerebro(MODE)
+respuesta = modelo.invoke(
+    [
+        ("system", "Responde en dos oraciones, sin tecnicismos."),
+        ("human", "Hola, me llamo Ana. ¿Qué es un agente de IA?"),
+    ]
+)
+print("Quién respondió:", respuesta.response_metadata.get("model_name"))
+print("Respuesta:", respuesta.text)
+print("Tokens:", respuesta.usage_metadata or "no aplica en offline")
 
 # %% [markdown]
-# **Experimento (live):** cambiá el mensaje *system* por "Respondé como un pirata".
-# El pedido es el mismo, pero el comportamiento cambia: el *system prompt* es una
-# herramienta de diseño poderosa. Ojo: **no es una barrera de seguridad**. Los límites
-# reales (qué herramientas existen, cuántas llamadas, qué se aprueba) van en el código.
+# 🔍 **Observa:**
+# - En offline responde `reglas-offline`: saluda porque una regla detectó "me llamo".
+# - En live responde `gpt-6-luna` y `usage_metadata` muestra los tokens reales: con eso se
+#   calcula el costo exacto.
+# - El *system prompt* cambia el comportamiento, pero **no es una barrera de seguridad**.
+#   Los límites reales van en el código, como verás en la clase 4.
+
+# %% [markdown]
+# ## Un agente en acción
+# `crear_agente` arma el bucle modelo → herramienta → modelo con límites de seguridad.
+# La herramienta es `buscar_archivo`: busca en el catálogo ficticio del curso (la construyes
+# en la clase 1). `linea_de_tiempo` muestra quién hizo qué.
 #
-# ## Un agente completo, en tres líneas
-# `create_agent` (de LangChain) arma el bucle modelo → herramienta → modelo por nosotros.
-# Le damos un modelo, una herramienta (el buscador del catálogo del curso) y límites.
-# En la clase 1 vas a construir esa herramienta desde cero; hoy solo la usamos.
-#
-# **Predicción:** ¿cuántas veces va a pedir el agente la herramienta para "Buscá
-# fichas de investigación de Batman"? ¿Qué IDs esperás ver?
+# 🔮 **Predice:** para "Busca fichas de investigación de Batman", ¿cuántas veces usará la
+# herramienta? ¿Qué IDs esperas (empiezan con `BAT-`)?
 
 # %%
 from langchain_core.messages import HumanMessage
 
-from henry_agents.agentic import build_prebuilt_agent, linea_de_tiempo, mostrar_grafo
+from henry_agents.agentic import crear_agente, linea_de_tiempo
 
-agente = build_prebuilt_agent(MODE, max_model_calls=4, max_tool_calls=3)
-resultado = agente.invoke({"messages": [HumanMessage("Buscá fichas de investigación de Batman")]})
+agente = crear_agente(MODE)
+resultado = agente.invoke({"messages": [HumanMessage("Busca fichas de investigación de Batman")]})
 linea_de_tiempo(resultado["messages"])
 
 # %% [markdown]
-# Leé la línea de tiempo de arriba hacia abajo:
-# - 👤 la persona pide algo;
-# - 🤖 el modelo **propone** llamar `buscar_archivo` con ciertos argumentos;
-# - 🔧 **nuestro programa** ejecuta la búsqueda y devuelve una observación con IDs;
-# - 🤖 el modelo responde usando esa observación.
+# 🔍 **Observa:**
+# - 👤 la persona pide; 🤖 el modelo **propone** `buscar_archivo` con argumentos.
+# - 🔧 **tu programa** ejecuta la búsqueda y devuelve fichas con IDs.
+# - 🤖 el modelo responde citando esos IDs entre corchetes.
 #
-# El agente también **es un grafo**. Dibujémoslo: los nodos con "Middleware" son los
-# controles de límites que agregamos. Sin Internet se dibuja en texto; está bien así.
+# Por dentro, el agente es un **grafo**: el nodo `model` decide, el nodo `tools` ejecuta, y
+# unos nodos de **middleware** cuentan llamadas para cortar si algo se repite demasiado.
+#
+# ```text
+# START → [límites] → model ──¿herramienta?── sí → tools ──┐
+#                       ▲                                 │
+#                       └─────────────────────────────────┘
+#                       └─ no → END
+# ```
 
 # %%
-mostrar_grafo(agente)
-assert any(m.type == "tool" for m in resultado["messages"]), "El agente debía usar la herramienta"
-print("✅ El agente consultó la herramienta antes de responder.")
+from henry_agents.practica import confirmar
+
+usadas = [m for m in resultado["messages"] if m.type == "tool"]
+confirmar(len(usadas) >= 1, "El agente debía consultar la herramienta antes de responder")
+if MODE == "offline":
+    confirmar("[BAT-01]" in resultado["messages"][-1].text, "La respuesta debía citar BAT-01")
+print("✅ El agente buscó antes de responder.")
 
 # %% [markdown]
-# **Punto de reenganche:** podés señalar en la línea de tiempo qué decidió el modelo y
-# qué ejecutó el programa. Si eso está claro, ya entendiste lo más importante del curso.
+# ### ✏️ Tu turno: cambia el pedido
+# Un agente **sigue tu pedido**. Escribe un pedido sobre **cooperación** en la colección
+# **El Chavo** y ejecuta. Si sale bien, la respuesta cita una ficha que empieza con `CHA-`.
+
+# %%
+mi_pedido = None  # ✏️ completa aquí, por ejemplo: "Busca fichas de ... de ..."
+
+mi_resultado = None
+if mi_pedido:
+    mi_resultado = agente.invoke({"messages": [HumanMessage(mi_pedido)]})
+    linea_de_tiempo(mi_resultado["messages"])
+
+# %%
+comprobar(
+    mi_resultado is not None and "CHA-" in mi_resultado["messages"][-1].text,
+    "El agente buscó en la colección que pediste y citó una ficha de El Chavo.",
+    "Escribe un texto entre comillas que mencione 'cooperación' y 'El Chavo'.",
+)
+
+# %%
+ver_solucion("00_cambia_el_pedido")
+
+# %% [markdown]
+# **Experimento:** prueba un pedido sin tema, como `"hola"`. En offline, la regla no busca
+# y te pide un tema. En live, GPT-6 decide por su cuenta. Un buen agente no busca a ciegas.
 #
-# ## Pausa
-#
+# ## ☕ Pausa
+
+# %% [markdown]
 # ## Taller: ¿workflow o agente?
-# Para cada situación, elegí `"workflow"` (pasos conocidos de antemano) o `"agente"`
-# (el próximo paso depende de lo que se vaya encontrando). Completá el diccionario.
-# No hay que programar: solo cambiar el texto entre comillas.
+# Para cada situación elige `"workflow"` (los pasos se conocen de antemano) o `"agente"`
+# (el siguiente paso depende de lo que se vaya encontrando). Cambia solo el texto.
 #
-# 1. Cada mañana, resumir los correos nuevos y mandarlos a un canal.
-# 2. Un asistente que investiga una pregunta abierta y decide qué buscar según lo que encuentra.
-# 3. Clasificar tickets de soporte en tres categorías y enviarlos al área correspondiente.
-# 4. Ayudar a depurar un error de programación desconocido, probando hipótesis.
+# 1. Cada mañana, resumir los correos nuevos y enviarlos a un canal.
+# 2. Investigar una pregunta abierta, decidiendo qué buscar según lo que aparece.
+# 3. Clasificar tickets de soporte en tres áreas y enviarlos a cada una.
+# 4. Ayudar a depurar un error desconocido, probando hipótesis.
 # 5. Traducir un documento y revisar que no falten párrafos.
 
 # %%
 mis_respuestas = {
     1: "workflow",
-    2: "workflow",  # ¿Seguro? Pensá si los pasos se conocen de antemano.
+    2: "workflow",  # ✏️ ¿los pasos se conocen de antemano?
     3: "workflow",
-    4: "workflow",
+    4: "workflow",  # ✏️ revisa esta también
     5: "workflow",
 }
 
-# %% [markdown]
-# ## Solución comentada
-# Compará con tu respuesta. Lo importante es la **razón**, no acertar la palabra.
+# %%
+claves = {1: "workflow", 2: "agente", 3: "workflow", 4: "agente", 5: "workflow"}
+aciertos = sum(mis_respuestas[n] == claves[n] for n in claves)
+comprobar(
+    aciertos == 5,
+    "Las cinco son correctas. Lo importante es poder decir por qué.",
+    f"Llevas {aciertos} de 5. Pregúntate en cada caso: ¿sé qué pasos vendrán?",
+)
 
 # %%
-solucion = {
-    1: ("workflow", "Pasos fijos: leer → resumir → enviar. Un agente agregaría costo sin beneficio."),
-    2: ("agente", "No se sabe de antemano qué buscar; cada resultado cambia el siguiente paso."),
-    3: ("workflow", "Es routing: una clasificación y una regla. Un LLM puede clasificar, sin bucle."),
-    4: ("agente", "Hay que probar hipótesis y reaccionar a lo que se observa."),
-    5: ("workflow", "Traducir y luego comprobar: evaluador con criterio claro (clase 4)."),
-}
-for numero, (tipo, razon) in solucion.items():
-    marca = "✅" if mis_respuestas[numero] == tipo else "🔁"
-    print(f"{marca} {numero}. {tipo:8} — {razon}")
+ver_solucion("00_workflow_o_agente")
 
 # %% [markdown]
-# ## Glosario de bolsillo
+# ## 🧱 Proyecto · Paso 0: leer el encargo
+# Abre `proyectos/asistente_archivo/README.md`. El Centro Cultural pide un asistente que
+# busque fichas citando IDs, no invente, prepare actividades y no guarde nada sin aprobación.
 #
+# **Entrega:** una tabla con cada requisito del encargo, el escalón de autonomía que necesita
+# y una razón de una línea. Ejemplo: "Citar IDs → herramienta con contrato (clase 1): los IDs
+# los devuelve el programa, no el modelo".
+
+# %% [markdown]
+# ## 🎟️ Ticket de salida
+# - En un *tool call*, ¿qué hace el modelo y qué hace el programa?
+# - Nombra un problema de tu trabajo para un workflow y otro para un agente.
+# - ¿Qué modelo GPT-6 elegirías para clasificar 10.000 mensajes cortos, y por qué?
+#
+# ## 📖 Glosario de hoy
 # | Término | En una frase |
 # |---|---|
-# | LLM | Modelo que predice texto; escribe bien, puede inventar |
-# | Token | Pedazo de palabra; unidad de lectura y de cobro |
-# | Prompt / system prompt | Lo que le enviamos al modelo / las reglas generales |
-# | Herramienta (tool) | Función de nuestro programa que el modelo puede pedir |
-# | Tool call | El pedido del modelo: nombre de herramienta + argumentos |
-# | Observación | Lo que devolvió la herramienta y vuelve al modelo |
-# | Agente | LLM en un bucle que decide acciones con herramientas, con límites |
-# | Workflow | Pasos definidos por el código, aunque alguno use un LLM |
-# | Grafo (LangGraph) | Mapa de pasos (nodos) y transiciones (aristas) con un estado compartido |
-# | Estado | Los datos que viajan entre los pasos de un grafo |
-# | Orquestación | Organizar quién hace qué, en qué orden y cómo se unen resultados |
-# | Subagente | Agente especialista al que otro agente le delega una tarea |
-# | Deep agent | Agente que planifica, usa archivos y delega en subagentes |
-# | Human-in-the-loop | Una persona aprueba, edita o rechaza antes de una acción |
-# | Alucinación | Respuesta segura pero inventada; por eso exigimos fuentes |
+# | Kernel | El Python que ejecuta las celdas del notebook |
+# | LLM | Modelo que predice texto; escribe bien y puede inventar |
+# | Token | Pedacito de palabra; unidad de lectura y de cobro |
+# | Prompt / system prompt | Lo que envías al modelo / sus reglas generales |
+# | Herramienta (*tool*) | Función de tu programa que el modelo puede pedir |
+# | Agente | Modelo en un bucle que decide acciones con herramientas, con límites |
+# | Workflow | Pasos definidos por el código |
+# | Orquestación | Organizar quién hace qué, en qué orden y cómo se unen los resultados |
+# | Middleware | Pieza que corre antes o después del modelo, por ejemplo para contar llamadas |
+# | Esfuerzo de razonamiento | Cuánto "piensa" el modelo antes de responder |
 #
-# ## Ticket de salida
-# Respondé en tres líneas (oral, escrito o dibujo):
-# - ¿Qué hace el modelo y qué hace el programa en un tool call?
-# - Nombrá un problema de tu trabajo que resolverías con un workflow y otro con un agente.
-# - ¿Qué modelo GPT-6 elegirías para clasificar 10.000 mensajes, y por qué?
-#
-# **Próxima clase:** construimos desde cero la herramienta `buscar_archivo` que usó el
-# agente de hoy, con un contrato que no se deja engañar.
+# ## Límites de lo que hicimos
+# - En offline, el cerebro son reglas: entiende pocos tipos de pedido.
+# - Los precios son de octubre de 2026; revísalos antes de calcular costos reales.
+# - El catálogo tiene doce fichas inventadas: es un laboratorio, no un buscador real.

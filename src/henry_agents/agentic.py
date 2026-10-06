@@ -238,6 +238,9 @@ class ModeloReglas(_CerebroOffline):
                         "una noche. (Respondí sin buscar: esta ficha no existe.)"
                     )
                 if argumentos["query"] is None:
+                    charla = self._conversar(mensajes, pedido)
+                    if not charla.startswith("Soy un cerebro"):
+                        return AIMessage(content=charla)
                     return AIMessage(
                         content="Puedo buscar en el catálogo del curso. Dime un tema "
                         "(investigación, equipo, herramientas, evidencia…) y una colección."
@@ -327,6 +330,10 @@ class ModeloReglas(_CerebroOffline):
 # ---------------------------------------------------------------------------
 
 TRADUCCIONES = [
+    (
+        r"Error invoking tool '(\w+)' with kwargs .*? with error:\s*(.*?)\s*Please fix the error and try again\.",
+        r"La herramienta \1 rechazó los argumentos: \2. Corrige y vuelve a intentar.",
+    ),
     (r"Model call limits exceeded: run limit \((\d+)/(\d+)\)", r"Límite de llamadas al modelo alcanzado (\1 de \2). Me detengo."),
     (r"User rejected the tool call for `(\w+)` with reason: (.*)", r"Una persona rechazó \1. Motivo: \2"),
     (r"Tool call limit exceeded\. Do not make additional tool calls\.", "Límite de herramientas alcanzado: no se ejecutó."),
@@ -377,6 +384,11 @@ def ver_en_vivo(agente, entrada, config=None, ancho=140):
     Devuelve el estado final (si el agente tiene checkpointer) o los mensajes vistos.
     """
     vistos, pausas = [], []
+    if isinstance(entrada, dict):
+        for mensaje in entrada.get("messages", []):
+            if isinstance(mensaje, BaseMessage):
+                for linea in describir(mensaje, ancho):
+                    print(linea)
     for espacio, actualizacion in agente.stream(
         entrada, config, stream_mode="updates", subgraphs=True
     ):
