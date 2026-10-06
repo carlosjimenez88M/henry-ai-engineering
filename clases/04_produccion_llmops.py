@@ -34,8 +34,11 @@
 # No necesitás conocer estos personajes para resolver las actividades.
 #
 # **Dos modos:** offline usa búsqueda real y grafos reales, pero sustituye al LLM por
-# reglas/extractos explícitos. Live usa OpenAI y consume API. El estudiante puede
+# reglas/extractos explícitos. Live usa OpenAI (GPT-6) y consume API. El estudiante puede
 # hacer toda la práctica offline; el docente demuestra live. No compartas el .env.
+#
+# **En VS Code:** elegí el kernel `.venv` (arriba a la derecha), ejecutá con Shift + Enter
+# y, si cambiás el `.env`, reiniciá el kernel. Conceptos base y glosario: clase 0.
 
 # %% [markdown]
 # ## El error que una respuesta bonita puede esconder
@@ -175,6 +178,15 @@ revision.add_conditional_edges("evaluar", decidir, ["listo", "escalar", "redacta
 revision.add_edge("listo", END)
 revision.add_edge("escalar", END)
 app_revision = revision.compile()
+
+# %% [markdown]
+# Dibujamos el ciclo. Buscá la flecha que **vuelve** de evaluar a redactar: esa es la
+# diferencia con los grafos de la clase 2, que siempre avanzaban hacia END.
+
+# %%
+from henry_agents.agentic import mostrar_grafo
+
+mostrar_grafo(app_revision)
 
 # %%
 corregido = app_revision.invoke(
@@ -407,6 +419,11 @@ print("Reporte guardado:", ruta.name)
 # **Rúbrica:** contrato y pruebas de herramienta 25%; elección/implementación de
 # arquitectura 30%; fuentes y abstención 20%; evaluación y revisión humana 25%.
 # Se evalúa explicar y comprobar, no recordar sintaxis ni terminar primero.
+#
+# **Puente a la clase 5:** hoy construimos a mano `interrupt` + `Command(resume=...)`.
+# Deep Agents trae lo mismo listo con `interrupt_on={"write_file": True}`: pausa antes
+# de una herramienta y acepta aprobar, editar o rechazar. Entender la versión manual
+# es lo que te permite confiar en la versión prearmada y diagnosticarla.
 #
 # **Crítica final:** aún no tenemos autenticación, almacenamiento durable ni una
 # evaluación semántica completa. Son requisitos para otro alcance, no promesas de

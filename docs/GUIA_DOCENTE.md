@@ -1,4 +1,9 @@
-# Guía docente · AI Engineering aplicado, cuatro clases
+# Guía docente · AI Engineering aplicado, seis clases
+
+Esta guía corresponde al **recorrido ampliado** de LangGraph y Deep Agents.
+Para personas que recién comienzan, usa primero la
+[guía de las ocho clases iniciales](GUIA_DOCENTE_WORKFLOWS.md) y su
+[ruta de workflows](../clases/agentic_workflows/README.md).
 
 ## Crítica de la versión anterior y cambio de criterio
 
@@ -32,10 +37,33 @@ se destacan pocas líneas y su relación con un dibujo o un dato. Hay pistas y p
 de reenganche antes de las pausas. Las soluciones se revisan después del intento,
 comparando una diferencia concreta. No improvisar una página en blanco de 50 líneas.
 
-Preparar el entorno antes, con ayuda. Offline permite participar sin claves ni
-cuentas. El docente puede mostrar live explicando claramente cuál usa un modelo.
+Preparar el entorno antes, con ayuda, siguiendo `docs/INSTALACION.md`. La causa más
+común de "los notebooks no corren en VS Code" es que falta la extensión **Jupyter** o que
+el kernel elegido no es `.venv`; `scripts/doctor.py` detecta ambas. Offline permite
+participar sin claves ni cuentas. El docente puede mostrar live explicando claramente cuál usa un modelo.
 Si alguien no puede ejecutar, trabaja con una pareja o documenta sus predicciones;
 no se califica la instalación como comprensión de arquitectura.
+
+## Clase 0 · Bienvenida al mundo agéntico
+
+**Tres anclas:** el modelo propone, el programa ejecuta; workflow antes que agente; costo.
+**Producto:** entorno funcionando, un agente observado en una línea de tiempo y una
+clasificación justificada de cinco situaciones.
+
+- **Entorno:** la primera celda dice si el kernel es `.venv`. Resolver aquí, no en la clase 1.
+- **Cinco palabras:** LLM, token, prompt, herramienta, agente. Usar la analogía receta
+  (workflow) frente a cocinero (agente). No avanzar si alguien cree que el modelo "ejecuta" código.
+- **Escalera de autonomía:** ubicar cada clase del módulo en un escalón. Preguntar por qué
+  no empezar por el escalón más alto.
+- **Pausa.**
+- **Modelos GPT-6:** Luna, Sol y Astra; calcular el costo de un curso con cada uno. El
+  objetivo es que "elegir modelo" se vea como decisión de ingeniería.
+- **Primer agente:** `create_agent` con límites; leer la línea de tiempo (👤 🤖 🔧) en voz alta.
+- **Pausa.**
+- **Taller workflow o agente:** lo importante es la razón, no la etiqueta.
+
+**Error útil:** creer que el *system prompt* es una barrera de seguridad. **Profundidad:**
+los límites reales están en el código (herramientas disponibles, middleware, aprobaciones).
 
 ## Clase 1 · Herramienta confiable
 
@@ -89,7 +117,8 @@ además de todo esto: aquí la búsqueda lexical ya ofrece evidencia inspecciona
 ## Clase 3 · Arquitecturas y equipos
 
 **Tres anclas:** dividir trabajo, combinar estado y decidir quién controla.
-**Producto:** paralelo fijo y orquestador con Send; demo acotada de tool agent.
+**Producto:** paralelo fijo, orquestador con Send, agente con límites (a mano y con
+`create_agent`) y supervisor con `Command` y límite de delegaciones.
 
 - **Elección de arquitectura:** elegir patrón según tres tareas y contrastar el mapa. Los ocho patrones no
   son ocho implementaciones que deban dominar de memoria ese día.
@@ -99,10 +128,16 @@ además de todo esto: aquí la búsqueda lexical ya ofrece evidencia inspecciona
 - **Orquestador y workers:** convertir número fijo en plan variable. Mostrar por qué parts necesita un
   reducer; concatenar no equivale a deduplicar. Validar el plan antes de repartir.
 - **Agente con herramientas:** seguir modelo → herramienta → modelo. Nombrar límites, observaciones y modo.
+  Cambiar `MAX_LLAMADAS` a 1. Luego la versión prearmada: `create_agent` con
+  `ModelCallLimitMiddleware` frente a un guion "atascado" que nunca deja de pedir herramientas.
 - **Pausa.**
 - **Taller del equipo:** agregar música al plan sin copiar nodos, duplicar una colección y rechazar
   otra desconocida. La celda del reto parte de dos colecciones; la ampliación completa
-  aparece después, en la solución. Comparar supervisor y handoff con sus responsabilidades.
+  aparece después, en la solución.
+- **Supervisor:** construir el grafo con `Command(goto=..., update=...)`. Contar en voz alta
+  cuántas veces vuelve el control al centro. Bajar `max_delegaciones` a 1 y leer la bitácora.
+  En live decide GPT-6 con salida estructurada; el límite lo sigue imponiendo el código.
+  Comparar con handoff, que queda en diseño.
 - **Cierre:** defender una arquitectura y un caso de error.
 
 **Error útil:** creer que dos funciones paralelas son dos agentes. **Profundidad:**
@@ -134,6 +169,34 @@ No quitar pausas ni convertir la demo de agente en una nueva implementación lar
 se agotó el límite. **Profundidad:** el criterio de IDs no prueba verdad semántica.
 Un reporte de pruebas tampoco sustituye autenticación o almacenamiento durable.
 
+## Clase 5 · Deep Agents
+
+**Tres anclas:** plan, delegación con contexto limpio y permiso antes de actuar.
+**Producto:** un equipo (coordinador + investigador + dj) que escribe `/actividad.md`
+después de una aprobación, un rechazo comprobado y una verificación de citas con código.
+
+- **Qué le falta a un agente simple:** perder el hilo, saturar contexto, hacer todo solo,
+  actuar sin preguntar. Relacionar cada ingrediente con una clase anterior.
+- **Leer antes de ejecutar:** el prompt del coordinador y las descripciones de los
+  especialistas. La descripción es lo que el coordinador usa para decidir a quién delegar.
+- **Ejecutar hasta la pausa:** mostrar plan (`todos`), que todavía no hay archivos y la
+  propuesta pendiente. Una persona lee, otra decide.
+- **Pausa.**
+- **Aprobar y leer la línea de tiempo:** señalar las dos llamadas `task` en el mismo paso
+  (delegación en paralelo) y que el coordinador no ve las búsquedas internas.
+- **Rechazar:** otro `thread_id`; comprobar que no hay archivos y que el agente lo informa.
+- **Verificar citas:** expresión regular + conjunto de IDs del catálogo.
+- **Pausa.**
+- **Taller:** cambiar tema/colección (predicción CHA-01 y MUS-01), escribir `validar_ids`
+  como herramienta y probar un especialista verificador aislado.
+- **Cierre:** tabla workflow / `create_agent` / deep agent. Pedir un caso donde un deep agent
+  sería exagerado.
+
+**Error útil:** aprobar porque "se ve bien". **Profundidad:** en live, mostrar una
+ejecución real con Sol coordinando y Luna en los especialistas, y diagnosticar con la línea
+de tiempo antes de proponer un modelo más grande. Offline, explicar con claridad que las
+decisiones son un guion y que todo lo demás (harness, subagentes, archivos, aprobación) es real.
+
 ## Reenganche y ajuste del ritmo
 
 Si alguien pierde el hilo, preguntar qué fue lo último que funcionó y ubicar el
@@ -157,6 +220,10 @@ manteniendo objetivos, dos pausas y cierre.
 | Arquitectura justificada | 30 | Grafo ejecutable, decisión comparada y prueba de una falla |
 | Evidencia y abstención | 20 | Fuentes recuperadas, referencias válidas y ausencia de evidencia |
 | Evaluación y responsabilidad | 25 | Reporte, ciclo acotado, aprobación y rechazo |
+
+El proyecto integrador de la clase 5 (equipo de deep agents con aprobación, rechazo y
+verificación de citas) puede reemplazar la evidencia de "Arquitectura justificada" si
+incluye la comparación con un workflow más simple.
 
 Aceptar explicación oral, escrita o diagramas, junto con ejecuciones. Permitir
 corregir después de feedback. No premiar cantidad de agentes ni exigir exposición

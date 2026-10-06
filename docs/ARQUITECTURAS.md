@@ -13,6 +13,7 @@ agentes. Este mapa acompaña las explicaciones y ejemplos completos de los noteb
 | Mejorar un borrador contra un criterio | Evaluador–optimizador | Evaluar → corregir o terminar | Evidencia, borrador, intentos | Repetir sin progreso o entregar algo inválido |
 | Delegaciones sucesivas coordinadas | Supervisor | Especialista devuelve al coordinador | Tarea, resultado y límite de delegación | Cuello de botella o circularidad |
 | Transferir responsabilidad | Handoff | El receptor continúa el control | Motivo, contexto y permisos | Contexto perdido o transferencia circular |
+| Tarea larga con entregables y subtareas separables | Deep agent | Coordinador con plan, archivos y subagentes | Todos, archivos virtuales, mensajes | Delegación inútil, archivo sin aprobación, citas inventadas |
 
 ## Secuencia frente a routing
 
@@ -39,6 +40,10 @@ el modelo; offline representa el mismo protocolo con un guion. El contador limit
 llamadas y una salida explícita informa agotamiento. max_calls no mide dólares y
 recursion_limit no reemplaza un presupuesto de uso del proveedor.
 
+La versión prearmada usa `create_agent` de LangChain. Los límites se declaran como
+middleware (`ModelCallLimitMiddleware`, `ToolCallLimitMiddleware`) y se prueban con un
+modelo guionado que nunca deja de pedir herramientas.
+
 ## Evaluador–optimizador y revisión humana
 
 La clase 4 revisa si las fuentes citadas existen. Inyecta una cita falsa en el primer
@@ -52,11 +57,22 @@ usado no ofrece persistencia después de reiniciar.
 
 ## Supervisor y handoff: alcance de esta entrega
 
-Se comparan sus contratos y riesgos en la clase 3; no hay un supervisor conversacional
-completo ni un handoff autónomo implementado. No confundir el reparto de workers con
-un supervisor que replantea decisiones, ni una aprobación humana con un handoff
-entre agentes. La entrega distingue esas capacidades para evitar una falsa sensación
-de haber construido todo por usar nombres de patrones.
+La clase 3 construye un supervisor acotado: un nodo que devuelve `Command(goto, update)`,
+especialistas que siempre devuelven el control al centro y un `max_delegaciones` que el
+código impone aunque el modelo quiera seguir. Offline decide una regla; en live, GPT-6 con
+salida estructurada sobre una lista cerrada de opciones. No es un supervisor
+conversacional completo. El handoff se compara en diseño; no hay un handoff autónomo
+implementado. No confundir el reparto de workers con un supervisor que replantea
+decisiones, ni una aprobación humana con un handoff entre agentes.
+
+## Deep agent
+
+La clase 5 usa `create_deep_agent` (Deep Agents, sobre LangGraph). El coordinador
+planifica con `write_todos`, delega con `task` en dos subagentes que pueden trabajar en
+paralelo con contexto propio, escribe en un sistema de archivos virtual (estado del grafo)
+y pide aprobación antes de `write_file` mediante `interrupt_on`. Es la combinación de
+supervisor, revisión humana y agente con herramientas, empaquetada. En live, el
+coordinador usa `gpt-6.1-sol` y los especialistas `gpt-6-luna`.
 
 ## Preguntas antes de elegir
 
@@ -67,5 +83,6 @@ de haber construido todo por usar nombres de patrones.
 5. ¿Necesito una decisión del modelo o una regla es suficiente?
 6. ¿Tengo un criterio comprobable para repetir y una condición para terminar?
 7. ¿Hay una acción que deba revisar una persona y puedo reanudar sin duplicarla?
+8. ¿La tarea es larga, con subtareas separables y un entregable? Recién ahí, un deep agent.
 
 Las respuestas deben aparecer en pruebas y estados observables, no solo en diagramas.

@@ -1,0 +1,12 @@
+[
+  {"id": "WF-01", "pedido": {"sku": "arroz", "cantidad": 2, "barrio": "Centro"}, "decision": "aprobar", "estado": "aprobado", "total_usd": "5.60"},
+  {"id": "WF-02", "pedido": {"sku": "cafe", "cantidad": 1, "barrio": "Norte"}, "decision": "pendiente", "estado": "pendiente", "total_usd": "7.50"},
+  {"id": "WF-03", "pedido": {"sku": "cafe", "cantidad": 2, "barrio": "Retiro"}, "decision": "aprobar", "estado": "aprobado", "total_usd": "9.00"},
+  {"id": "WF-04", "pedido": {"sku": "cuaderno", "cantidad": 1, "barrio": "Centro"}, "decision": "aprobar", "estado": "sin_stock"},
+  {"id": "WF-05", "pedido": {"sku": "arroz", "cantidad": 9, "barrio": "Centro"}, "decision": "aprobar", "estado": "sin_stock"},
+  {"id": "WF-06", "pedido": {"sku": "leche", "cantidad": 1, "barrio": "Centro"}, "decision": "aprobar", "estado": "sin_producto"},
+  {"id": "WF-07", "pedido": {"sku": "arroz", "cantidad": 1, "barrio": "Sur"}, "decision": "aprobar", "estado": "fuera_de_cobertura"},
+  {"id": "WF-08", "pedido": {"sku": "arroz", "cantidad": 1, "barrio": "Centro"}, "decision": "rechazar", "estado": "rechazado", "total_usd": "3.80"},
+  {"id": "WF-09", "pedido": {"sku": "arroz", "cantidad": 0, "barrio": "Centro"}, "decision": "aprobar", "estado": "entrada_invalida"},
+  {"id": "WF-10", "pedido": {"sku": "cafe", "cantidad": 1, "barrio": "Céntro"}, "decision": "aprobar", "estado": "aprobado", "total_usd": "6.50"}
+]

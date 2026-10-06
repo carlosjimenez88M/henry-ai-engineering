@@ -1,0 +1,14 @@
+{
+  "nombre": "La Esquina — tienda ficticia",
+  "nota": "Precios y barrios inventados. USD es una unidad didáctica; no hay tipo de cambio ni transacciones.",
+  "productos": [
+    {"sku": "arroz", "nombre": "Arroz de 1 kg", "precio_usd": "1.80", "stock": 8, "fuente": "CAT-ARROZ"},
+    {"sku": "cafe", "nombre": "Café de 250 g", "precio_usd": "4.50", "stock": 3, "fuente": "CAT-CAFE"},
+    {"sku": "cuaderno", "nombre": "Cuaderno de 80 hojas", "precio_usd": "2.00", "stock": 0, "fuente": "CAT-CUADERNO"}
+  ],
+  "entregas": {
+    "centro": {"costo_usd": "2.00", "detalle": "Entrega en Centro, sin promesa de horario", "fuente": "POL-ENTREGA"},
+    "norte": {"costo_usd": "3.00", "detalle": "Entrega en Norte, sin promesa de horario", "fuente": "POL-ENTREGA"},
+    "retiro": {"costo_usd": "0.00", "detalle": "Retiro en la tienda", "fuente": "POL-ENTREGA"}
+  }
+}

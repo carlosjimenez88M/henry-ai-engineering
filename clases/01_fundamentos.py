@@ -38,8 +38,11 @@
 # No necesitás conocer estos personajes para resolver las actividades.
 #
 # **Dos modos:** offline usa búsqueda real y grafos reales, pero sustituye al LLM por
-# reglas/extractos explícitos. Live usa OpenAI y consume API. El estudiante puede
+# reglas/extractos explícitos. Live usa OpenAI (GPT-6) y consume API. El estudiante puede
 # hacer toda la práctica offline; el docente demuestra live. No compartas el .env.
+#
+# **En VS Code:** elegí el kernel `.venv` (arriba a la derecha), ejecutá con Shift + Enter
+# y, si cambiás el `.env`, reiniciá el kernel. Conceptos base y glosario: clase 0.
 
 # %% [markdown]
 # ## Problema antes de código
@@ -69,7 +72,6 @@ print("Modo:", MODE, "| fichas disponibles:", len(catalogo))
 # Ejecutá y comprobalo leyendo los IDs. No hace falta memorizar los nombres de campos.
 
 # %%
-
 ejemplo = search_catalog("investigación", universe="batman", top_k=2)
 print("Estado:", ejemplo.status)
 for ficha in ejemplo.hits:
@@ -169,7 +171,6 @@ class SearchArgs(BaseModel):
 # reglas: no es solamente un comentario para quien lee el programa.
 
 # %%
-
 entrada = SearchArgs(query="  investigación  ", universe="batman", top_k=2)
 print(entrada.model_dump())
 try:
@@ -247,7 +248,7 @@ def buscar_archivo(query: str, universe="todos", kind="todos", top_k=3) -> dict:
 # %%
 print("Nombre:", buscar_archivo.name)
 print("Campos:", list(buscar_archivo.args_schema.model_fields))
-resultado_tool = buscar_archivo.invoke({"query": "investigación", "universe": "batman", "top_k": 2})
+resultado_tool = buscar_archivo.invoke({"query": "investigación", "universe": "batman", "top_k": 3})
 print("IDs:", [f["id"] for f in resultado_tool["hits"]])
 
 # %% [markdown]

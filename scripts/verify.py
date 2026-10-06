@@ -32,6 +32,7 @@ def fingerprints(root):
         ("src", {".py", ".json"}),
         ("scripts", {".py"}),
         ("clases", {".py", ".ipynb"}),
+        ("proyectos", {".py", ".json"}),
     ]:
         paths.extend(p for p in (root / directory).rglob("*") if p.suffix in suffixes)
     return {
@@ -47,10 +48,13 @@ def save_report(path, report):
     temporary.replace(path)
 
 
-def validate_pairs(root):
-    sources = sorted((root / "clases").glob("0*.py"))
-    if len(sources) != 4:
-        raise ValueError("Se esperaban exactamente cuatro scripts de clase")
+def validate_pairs(root, track="all"):
+    directory = root / "clases"
+    if track == "workflows":
+        directory /= "agentic_workflows"
+    sources = sorted(directory.glob("0*.py") if track == "advanced" else directory.rglob("0*.py"))
+    if not sources:
+        raise ValueError("No se encontraron scripts de clase en clases/")
     for source in sources:
         notebook = nbformat.read(source.with_suffix(".ipynb"), as_version=4)
         script = jupytext.read(source)
@@ -61,9 +65,18 @@ def validate_pairs(root):
     return sources
 
 
+def artifact_path(source, root, output, suffix):
+    """Conservar subcarpetas: dos clases con igual nombre no pisan sus evidencias."""
+    relative = source.relative_to(root / "clases").with_suffix(suffix)
+    destination = output / relative
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    return destination
+
+
 def execute_script(source, root, output, mode):
-    env = {**os.environ, "COURSE_MODE": mode}
-    with (output / f"{source.stem}.log").open("w", encoding="utf-8") as log:
+    # Dibujos de grafos en texto: la verificación no depende de servicios web.
+    env = {**os.environ, "COURSE_MODE": mode, "HENRY_GRAPH_PNG": "0"}
+    with artifact_path(source, root, output, ".log").open("w", encoding="utf-8") as log:
         subprocess.run(
             [sys.executable, str(source)],
             cwd=root,
@@ -101,6 +114,7 @@ def execute_notebook(source, root, output, mode):
     env = {
         **os.environ,
         "COURSE_MODE": mode,
+        "HENRY_GRAPH_PNG": "0",
         "JUPYTER_PLATFORM_DIRS": "1",
         "IPYTHONDIR": str(output / "ipython"),
         "JUPYTER_RUNTIME_DIR": str(output / "runtime"),
@@ -109,21 +123,26 @@ def execute_notebook(source, root, output, mode):
         client.execute(env=env)
     finally:
         # Conservar celdas ya ejecutadas y el error para poder diagnosticar la falla.
-        nbformat.write(notebook, output / source.with_suffix(".ipynb").name)
+        nbformat.write(notebook, artifact_path(source, root, output, ".ipynb"))
         if km.has_kernel:
             asyncio.run(km.shutdown_kernel(now=True))
 
 
-def run_verification(root, mode):
+def run_verification(root, mode, track="all"):
     root = Path(root).resolve()
     if mode not in {"offline", "live"}:
         raise ValueError("Modo inválido")
+    if track not in {"all", "workflows", "advanced"}:
+        raise ValueError("Recorrido inválido")
     output = root / "reports" / mode
+    if track != "all":
+        output /= track
     output.mkdir(parents=True, exist_ok=True)
     path = output / "verification.json"
     report = {
         "run_id": str(uuid4()),
         "mode": mode,
+        "track": track,
         "status": "running",
         "started_at": timestamp(),
         "finished_at": None,
@@ -139,12 +158,16 @@ def run_verification(root, mode):
     try:
         report["versions"] = {
             p: importlib.metadata.version(p)
-            for p in ["langgraph", "langchain-core", "langchain-openai", "nbclient"]
+            for p in ["langgraph", "langchain-core", "langchain-openai", "deepagents", "nbclient"]
         }
         report["input_sha256"] = fingerprints(root)
-        sources = validate_pairs(root)
+        sources = validate_pairs(root, track)
         report["results"] = [
-            {"class": s.stem, "script": "pending", "notebook": "pending"} for s in sources
+            {
+                "class": str(s.relative_to(root / "clases").with_suffix("")),
+                "script": "pending", "notebook": "pending",
+            }
+            for s in sources
         ]
         save_report(path, report)
         for source, current in zip(sources, report["results"], strict=True):
@@ -180,9 +203,10 @@ def run_verification(root, mode):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=["offline", "live"], default="offline")
+    parser.add_argument("--track", choices=["all", "workflows", "advanced"], default="all")
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
-    return 0 if run_verification(root, args.mode)["status"] == "passed" else 1
+    return 0 if run_verification(root, args.mode, args.track)["status"] == "passed" else 1
 
 
 if __name__ == "__main__":

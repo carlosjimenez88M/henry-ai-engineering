@@ -4,10 +4,10 @@
 # No vamos a medir inteligencia contando agentes. Vamos a decidir qué estructura
 # resuelve una necesidad y a comprobar que no pierde resultados.
 #
-# **Producto:** un grafo paralelo, un orquestador de workers con plan variable y la
-# inspección de un agente que usa la herramienta de la clase 1.
-# Construimos los dos primeros por partes. El agente con herramientas es una demo
-# guiada; su implementación queda disponible para releer sin memorizarla hoy.
+# **Producto:** un grafo paralelo, un orquestador de workers con plan variable, un
+# agente con herramientas (hecho a mano y prearmado) y un supervisor con límite.
+# Construimos el paralelo, los workers y el supervisor por partes. El agente hecho a
+# mano es una demo guiada; su implementación queda disponible para releer.
 #
 # **Recorrido de la clase**
 #
@@ -19,9 +19,11 @@
 # - Distinguir paralelismo fijo de plan variable
 # - Construir un orquestador con Send y un reducer
 # - Observar el bucle de un agente y su límite de llamadas
+# - El mismo agente, prearmado con create_agent y middleware de límites
 # - Pausa
 # - Taller: agregar la colección musical al plan
-# - Comparar resultados y distinguir supervisor de handoff
+# - Construir un supervisor que vuelve a decidir tras cada especialista
+# - Distinguir supervisor de handoff y anticipar los deep agents
 # - Defender una arquitectura con sus límites
 #
 # **Cómo trabajar:** anticipá una salida, ejecutá una celda, observá y explicá.
@@ -36,8 +38,11 @@
 # No necesitás conocer estos personajes para resolver las actividades.
 #
 # **Dos modos:** offline usa búsqueda real y grafos reales, pero sustituye al LLM por
-# reglas/extractos explícitos. Live usa OpenAI y consume API. El estudiante puede
+# reglas/extractos explícitos. Live usa OpenAI (GPT-6) y consume API. El estudiante puede
 # hacer toda la práctica offline; el docente demuestra live. No compartas el .env.
+#
+# **En VS Code:** elegí el kernel `.venv` (arriba a la derecha), ejecutá con Shift + Enter
+# y, si cambiás el `.env`, reiniciá el kernel. Conceptos base y glosario: clase 0.
 
 # %% [markdown]
 # ## La forma del problema importa
@@ -68,8 +73,9 @@ print("Modo de las demos con modelo:", MODE)
 # | Orquestador–workers | Plan y reparto de tareas | Número variable de tareas | Duplicados o fan-out sin límite | Construimos hoy |
 # | Agente con herramientas | Modelo dentro de un bucle | Elegir acciones según observaciones | Loops y gasto | Demo guiada hoy |
 # | Evaluador–optimizador | Evaluación y criterio de salida | Corregir un borrador verificable | Mejoras aparentes sin progreso | Construimos en clase 4 |
-# | Supervisor | Coordinador que vuelve a decidir | Delegaciones sucesivas | Cuello de botella central | Comparación de diseño hoy |
+# | Supervisor | Coordinador que vuelve a decidir | Delegaciones sucesivas | Cuello de botella central | Construimos hoy (acotado) |
 # | Handoff | Agente que transfiere control | Cambiar responsable de conversación | Perder contexto o permisos | Comparación de diseño hoy |
+# | Deep agent | Coordinador con plan, archivos y subagentes | Tareas largas con entregables | Costo y depuración más difíciles | Clase 5 |
 #
 # Checkpointing y revisión humana son capacidades que podemos combinar con estos
 # patrones. No convierten por sí solos un workflow en un agente.
@@ -149,6 +155,15 @@ app_paralela = paralelo.compile()
 informe = app_paralela.invoke({"query": "herramientas"})
 assert set(informe["sources"]) == {"BAT-02", "FAN-02"}
 print("Informe conjunto:", informe["sources"])
+
+# %% [markdown]
+# Dibujamos el grafo: dos ramas que salen de START y se juntan en unir.
+# Si el dibujo no muestra la barrera como esperabas, compará con el diagrama de texto.
+
+# %%
+from henry_agents.agentic import mostrar_grafo
+
+mostrar_grafo(app_paralela)
 
 # %% [markdown]
 # **Microexperimento:** cambiá query por investigación. Batman tiene evidencia y
@@ -231,7 +246,10 @@ equipo.add_node("planificar", planificar)
 equipo.add_node("worker", worker)
 equipo.add_node("reunir", reunir)
 equipo.add_edge(START, "planificar")
+# ----- Acá está la diferencia con el paralelo fijo -----
+# repartir devuelve una lista de Send: una tarea por colección del plan.
 equipo.add_conditional_edges("planificar", repartir, ["worker"])
+# -------------------------------------------------------
 equipo.add_edge("worker", "reunir")
 equipo.add_edge("reunir", END)
 app_equipo = equipo.compile()
@@ -239,6 +257,7 @@ plan = {"query": "equipo", "universes": ["fantasticos", "chavo"], "parts": []}
 resultado = app_equipo.invoke(plan)
 assert len(resultado["parts"]) == 2
 print(resultado["summary"])
+mostrar_grafo(app_equipo)
 
 # %% [markdown]
 # **Comprobación de comprensión:** ¿qué pasa si duplicamos chavo en el plan?
@@ -274,11 +293,66 @@ estado_agente = agente.invoke(
 )
 assert any(isinstance(m, ToolMessage) for m in estado_agente["messages"])
 print("Llamadas al modelo o guion:", estado_agente["calls"])
-print("Respuesta final:", estado_agente["messages"][-1].content)
+print("Respuesta final:", estado_agente["messages"][-1].text)
+
+# %% [markdown]
+# **Experimento de límite:** cambiá `MAX_LLAMADAS` a 1 y anticipá qué pasa. El agente
+# alcanza a pedir la herramienta, pero no le quedan llamadas para redactar con la
+# observación: termina con el mensaje de límite. Probá también con 2 y con 5.
+
+# %%
+MAX_LLAMADAS = 1  # Cambiá este número y volvé a ejecutar la celda.
+agente_limitado = build_tool_agent(MODE, max_calls=MAX_LLAMADAS)
+estado_limitado = agente_limitado.invoke(
+    {"messages": [HumanMessage(content="Busca investigación de Batman")], "calls": 0},
+    config={"recursion_limit": 12},
+)
+print("Llamadas al modelo o guion:", estado_limitado["calls"])
+print("Respuesta final:", estado_limitado["messages"][-1].text)
+
+# %% [markdown]
+# ## El mismo agente, prearmado: create_agent y middleware
+# Escribir el bucle a mano sirve para entenderlo. En proyectos reales usamos
+# `create_agent` de LangChain, que construye ese mismo grafo modelo ↔ herramientas.
+# Los límites se agregan como **middleware**: piezas que se ejecutan antes o después
+# del modelo, como un control de seguridad en la puerta.
+#
+# - `ModelCallLimitMiddleware(run_limit=N)`: corta tras N llamadas al modelo.
+# - `ToolCallLimitMiddleware(run_limit=N)`: limita cuántas herramientas se ejecutan.
+#
+# **Prueba de estrés:** usamos un guion que **nunca deja de pedir la herramienta**, como
+# un modelo atascado. Sin límite, el bucle seguiría hasta el `recursion_limit`.
+# **Predicción:** con `max_model_calls=3`, ¿cuántas búsquedas se ejecutan?
+
+# %%
+from henry_agents.agentic import ModeloGuionado, build_prebuilt_agent, linea_de_tiempo, llamar
+
+# Este guion se usa también en live: no queremos pagar para ver un bucle atascado.
+atascado = ModeloGuionado(
+    pasos=[llamar("buscar_archivo", {"query": "investigación"}, f"repite-{i}") for i in range(50)]
+)
+agente_prearmado = build_prebuilt_agent(MODE, model=atascado, max_model_calls=3, max_tool_calls=10)
+salida = agente_prearmado.invoke({"messages": [HumanMessage("Busca investigación")]})
+linea_de_tiempo(salida["messages"], ancho=90)
+busquedas = [m for m in salida["messages"] if isinstance(m, ToolMessage)]
+assert len(busquedas) == 3
+print("Búsquedas ejecutadas antes del corte:", len(busquedas))
+
+# %% [markdown]
+# El middleware cortó el bucle y dejó un mensaje claro. Ahora el mismo agente con el
+# modelo del curso (GPT-6 Luna en live; guion que busca una vez y responde en offline).
+# Fijate en el dibujo: los nodos de middleware rodean al modelo.
+
+# %%
+agente_normal = build_prebuilt_agent(MODE, max_model_calls=4, max_tool_calls=3)
+normal = agente_normal.invoke({"messages": [HumanMessage("Busca fichas de investigación de Batman")]})
+linea_de_tiempo(normal["messages"], ancho=90)
+mostrar_grafo(agente_normal)
 
 # %% [markdown]
 # **Punto de reenganche 2:** compará una arista fija con la decisión de llamar una
 # herramienta. Si todos los pasos fueran conocidos, ¿qué costo extra agrega un agente?
+# ¿Qué ventaja tiene declarar los límites como middleware en lugar de escribirlos a mano?
 #
 # ## Pausa
 #
@@ -330,10 +404,155 @@ except ValueError:
     print("Plan desconocido rechazado.")
 
 # %% [markdown]
+# ## Arquitectura 6: supervisor
+# En orquestador–workers el plan se decide **una vez** al inicio. Un **supervisor**
+# vuelve a decidir **después de cada especialista**: mira qué se encontró y elige el
+# siguiente paso. El control siempre regresa al centro.
+#
+# ```text
+#            ┌──────────────── vuelve ────────────────┐
+#            ▼                                        │
+# START → supervisor ── delegar(colección) ──→ especialista
+#            │
+#            └── ya alcanza o se agotó el límite ──→ redactar → END
+# ```
+#
+# Usamos `Command(goto=..., update=...)`: el nodo devuelve **a dónde ir** y **qué
+# cambiar** en el estado, en una sola respuesta. En offline decide una regla ("delegá la
+# primera colección pedida que todavía no tenga hallazgos"). En live decide GPT-6 con
+# **salida estructurada**: solo puede elegir entre opciones de una lista cerrada.
+# El límite de delegaciones lo impone el código, **aunque el modelo quiera seguir**.
+
+# %%
+from typing import Literal
+
+from langgraph.types import Command
+from pydantic import BaseModel, Field
+
+from henry_agents.config import chat_model
+
+Opcion = Literal["batman", "fantasticos", "chavo", "canciones", "redactar"]
+
+
+class DecisionSupervisor(BaseModel):
+    siguiente: Opcion = Field(description="Colección a consultar o 'redactar' si ya alcanza")
+    motivo: str = Field(description="Una frase que justifique la decisión")
+
+
+class EstadoSupervisor(TypedDict, total=False):
+    pedido: str
+    tema: str
+    necesita: list[str]
+    asignada: str
+    hallazgos: Annotated[list[dict], operator.add]
+    bitacora: Annotated[list[str], operator.add]
+    delegaciones: int
+    max_delegaciones: int
+    informe: str
+
+
+def decidir_con_regla(estado):
+    cubiertas = {h["universe"] for h in estado.get("hallazgos", [])}
+    faltan = [u for u in estado["necesita"] if u not in cubiertas]
+    if faltan:
+        return DecisionSupervisor(siguiente=faltan[0], motivo=f"Falta evidencia de {faltan[0]}")
+    return DecisionSupervisor(siguiente="redactar", motivo="Todas las colecciones tienen hallazgos")
+
+
+def decidir_con_modelo(estado):
+    instrucciones = (
+        "Sos el supervisor de un equipo de búsqueda en un catálogo ficticio. Según el pedido "
+        "y los hallazgos, elegí UNA colección para consultar o 'redactar' si ya alcanza. "
+        "No repitas colecciones ya consultadas."
+    )
+    contexto = f"Pedido: {estado['pedido']}\nHallazgos: {estado.get('hallazgos', [])}"
+    supervisor_llm = chat_model().with_structured_output(DecisionSupervisor)
+    return supervisor_llm.invoke([("system", instrucciones), ("human", contexto)])
+
+
+decidir = decidir_con_modelo if MODE == "live" else decidir_con_regla
+
+
+# %% [markdown]
+# El nodo supervisor no busca nada: **solo decide y delega**. Leé el orden de sus
+# controles: primero el límite, después la decisión, después evitar repeticiones.
+
+
+# %%
+def supervisor(estado) -> Command[Literal["especialista", "redactar"]]:
+    hechas = estado.get("delegaciones", 0)
+    if hechas >= estado.get("max_delegaciones", 3):
+        return Command(goto="redactar", update={"bitacora": ["Límite de delegaciones alcanzado"]})
+    decision = decidir(estado)
+    consultadas = {h["universe"] for h in estado.get("hallazgos", [])}
+    if decision.siguiente == "redactar" or decision.siguiente in consultadas:
+        return Command(goto="redactar", update={"bitacora": [f"Redactar: {decision.motivo}"]})
+    return Command(
+        goto="especialista",
+        update={
+            "asignada": decision.siguiente,
+            "delegaciones": hechas + 1,
+            "bitacora": [f"Delegar en {decision.siguiente}: {decision.motivo}"],
+        },
+    )
+
+
+def especialista(estado):
+    resultado = search_catalog(estado["tema"], universe=estado["asignada"], top_k=1)
+    return {"hallazgos": [{"universe": estado["asignada"], "ids": [h.id for h in resultado.hits]}]}
+
+
+def redactar(estado):
+    lineas = [f"{h['universe']}: {h['ids'] or 'sin evidencia'}" for h in estado.get("hallazgos", [])]
+    return {"informe": "\n".join(lineas) or "Sin hallazgos."}
+
+
+grafo_supervisor = StateGraph(EstadoSupervisor)
+grafo_supervisor.add_node("supervisor", supervisor)
+grafo_supervisor.add_node("especialista", especialista)
+grafo_supervisor.add_node("redactar", redactar)
+grafo_supervisor.add_edge(START, "supervisor")
+grafo_supervisor.add_edge("especialista", "supervisor")  # El control vuelve al centro.
+grafo_supervisor.add_edge("redactar", END)
+app_supervisor = grafo_supervisor.compile()
+mostrar_grafo(app_supervisor)
+
+# %% [markdown]
+# **Predicción:** para "investigación" en batman y canciones, ¿cuántas veces pasa el
+# control por el supervisor? Contá: decide batman, vuelve, decide canciones, vuelve,
+# decide redactar. Tres decisiones, dos delegaciones.
+
+# %%
+pedido_supervisor = {
+    "pedido": "Necesito evidencia de investigación de Batman y una canción de ambiente.",
+    "tema": "investigación",
+    "necesita": ["batman", "canciones"],
+    "max_delegaciones": 3,
+}
+supervisado = app_supervisor.invoke(pedido_supervisor)
+for linea in supervisado["bitacora"]:
+    print("🧭", linea)
+print(supervisado["informe"])
+assert supervisado["delegaciones"] <= 3
+if MODE == "offline":
+    assert supervisado["delegaciones"] == 2
+    assert {h["universe"] for h in supervisado["hallazgos"]} == {"batman", "canciones"}
+
+# %% [markdown]
+# **Experimento:** bajá `max_delegaciones` a 1. El informe queda incompleto y la bitácora
+# dice por qué. Un sistema honesto informa lo que falta; no lo inventa.
+
+# %%
+corto = app_supervisor.invoke({**pedido_supervisor, "max_delegaciones": 1})
+print(corto["bitacora"])
+assert corto["delegaciones"] == 1
+assert "Límite de delegaciones alcanzado" in corto["bitacora"]
+
+# %% [markdown]
 # ### Supervisor y handoff: no son lo mismo
-# **Supervisor:** el coordinador recibe el resultado de un especialista y vuelve a
-# decidir. Podría pedir a Batman más evidencia y luego pedir a otro especialista una
-# comparación. El control regresa al centro; hay que limitar delegaciones.
+# **Supervisor:** lo acabamos de construir. El coordinador recibe el resultado de un
+# especialista y vuelve a decidir. El control regresa al centro; hay que limitar
+# delegaciones (lo hicimos con `max_delegaciones`).
 #
 # **Handoff:** el responsable actual transfiere el control y contexto al siguiente.
 # En una analogía de la vecindad, quien recibe el recado incompleto lo deriva a quien
@@ -346,8 +565,10 @@ except ValueError:
 # | ¿Qué contrato necesita? | Tarea y resultado | Contexto, motivo y responsabilidad |
 # | ¿Qué error debemos probar? | Delegación infinita | Transferencia circular o pérdida de contexto |
 #
-# Hoy los comparamos en diseño, no afirmamos haber implementado un supervisor o un
-# handoff conversacional completo. Orquestar workers con un plan es otra decisión.
+# Hoy construimos un supervisor acotado y comparamos el handoff en diseño; no
+# afirmamos haber implementado un handoff conversacional completo. En la clase 5,
+# Deep Agents usa la herramienta `task` para delegar: es un supervisor donde el
+# coordinador es un modelo y los especialistas son subagentes con su propio bucle.
 #
 # **Discusión:** si solo queremos dos IDs, no necesitamos un supervisor.
 # ¿Qué requisito nuevo justificaría agregarlo? Escribí el requisito antes del patrón.
@@ -358,4 +579,5 @@ except ValueError:
 # une resultados. Nombrá un caso de error y cómo lo probarías.
 #
 # **Criterio de logro:** justificás el patrón por la tarea, no por parecer más avanzado.
-# En la clase 4 agregamos revisión, ciclos acotados y una decisión humana.
+# En la clase 4 agregamos revisión, ciclos acotados y una decisión humana; en la
+# clase 5 juntamos todo en un deep agent.
