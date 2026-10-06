@@ -125,11 +125,16 @@ Modelos configurados por defecto (se cambian en `.env`):
 
 | Variable | Valor | Uso |
 |---|---|---|
-| `OPENAI_MODEL` | `gpt-6-luna` | Clases 0–4 y especialistas de la clase 5 |
-| `OPENAI_MODEL_AGENT` | `gpt-6.1-sol` | Coordinador del deep agent (clase 5) |
+| `OPENAI_MODEL` | `gpt-6-luna` | Actividades breves y especialistas |
+| `OPENAI_MODEL_AGENT` | `gpt-6.1-sol` | Coordinadores y Agentic RAG |
+| `OPENAI_MODEL_RAG` | `gpt-6-luna` | Generación RAG y revisión de fidelidad |
+| `OPENAI_EMBEDDING_MODEL` | `text-embedding-3-large` | Experimento semántico opcional |
 | `OPENAI_REASONING_EFFORT` | `low` | Cuánto "piensa" el modelo; más alto = más costo |
 
 **Nunca compartas el `.env` ni lo subas a Git**: contiene tu clave.
+Los modelos se verificaron el 6 de octubre de 2026; consulta [MODELOS.md](MODELOS.md).
+Las banderas live de los notebooks iniciales 03, 08 y 09 vienen apagadas. Para una
+comparación RAG real, ejecuta `uv run python scripts/evaluate_rag.py --mode live --case RAG-06`.
 
 ---
 
@@ -156,14 +161,15 @@ Si nada de esto resuelve el problema, copiá la salida de
 
 ## Para docentes: editar las clases
 
-Los archivos `clases/*.py` son la **fuente editable**; los `.ipynb` se generan a partir
+Los archivos `.py` de `clases/` y sus subcarpetas son la **fuente editable**; los `.ipynb` se generan a partir
 de ellos. Si editás un notebook directamente en VS Code, llevá los cambios al `.py`
 antes de verificar:
 
 ```bash
 uv run python scripts/sync_notebooks.py --desde-notebooks   # notebook → .py → notebook limpio
-uv run python scripts/verify.py --mode offline              # ejecuta las 14 clases en kernels nuevos
-uv run python scripts/verify.py --mode offline --track workflows  # solo las 8 iniciales
+uv run python scripts/verify.py --mode offline              # todas las clases en kernels nuevos
+uv run python scripts/verify.py --mode offline --track workflows  # las 10 iniciales
+uv run python scripts/evaluate_rag.py --mode offline        # doce preguntas para comparar RAG
 ```
 
 Evitá `input()` en las celdas: la verificación automática no puede responderlo.

@@ -2,12 +2,12 @@
 
 Un embedding convierte un texto en una lista de números: textos con significado parecido
 quedan cerca. En offline usamos un MAPA HECHO A MANO de tres dimensiones para ver la idea
-sin magia; en live, embeddings reales de OpenAI (text-embedding-3-small, 1536 números).
+sin magia; en live, embeddings reales de OpenAI configurados por rol en .env.
 """
 
 import math
 
-from henry_agents.config import MODELO_EMBEDDINGS, configure
+from henry_agents.config import configure, model_name
 from henry_agents.cultural import load_catalog
 from henry_agents.retrieval import tokens
 
@@ -50,7 +50,7 @@ def vector_de(texto):
 
 
 def similitud(a, b):
-    """Similitud coseno: 1 = misma dirección (mismo significado), 0 = nada en común."""
+    """Similitud coseno: 1 = misma dirección, 0 = vectores ortogonales; no prueba significado."""
     producto = sum(x * y for x, y in zip(a, b, strict=True))
     normas = math.sqrt(sum(x * x for x in a)) * math.sqrt(sum(y * y for y in b))
     return producto / normas if normas else 0.0
@@ -71,7 +71,7 @@ def buscar_por_significado(consulta, top_k=3, mode=None):
     if mode == "live":
         from langchain_openai import OpenAIEmbeddings
 
-        modelo = OpenAIEmbeddings(model=MODELO_EMBEDDINGS)
+        modelo = OpenAIEmbeddings(model=model_name("embeddings"))
         consulta_vec = modelo.embed_query(consulta)
         fichas_vec = modelo.embed_documents([_texto_de_ficha(f) for f in fichas])
     else:

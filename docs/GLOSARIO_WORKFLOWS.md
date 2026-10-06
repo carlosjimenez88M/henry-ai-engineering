@@ -22,8 +22,18 @@
 | Agente con LLM | Ciclo donde el modelo decide la próxima acción dentro de límites | Modelo → herramienta → observación → modelo |
 | Estado | Información que describe el avance actual | `pendiente`, `sin_stock`, `aprobado` |
 | Abstención | Reconocer que no hay datos suficientes para responder | Producto fuera del catálogo |
-| RAG | Recuperar evidencia y usarla para generar una respuesta | Se construye después, en la ruta ampliada |
-| Embedding | Representación numérica aprendida para comparar significado aproximado | No se necesita en la ruta inicial |
+| RAG | Recuperar evidencia y usarla para generar una respuesta | Manual → índice → búsqueda → respuesta, clase 08 |
+| Agentic RAG | Un agente decide cómo continuar recuperando evidencia | Buscar → observar → decidir de nuevo, clase 09; reglas en offline |
+| Fragmento / chunk | Parte de un documento que se puede recuperar | Conserva ID y origen; tamaño importa |
+| Solapamiento / overlap | Texto repetido entre fragmentos vecinos | Ayuda a conservar contexto y puede duplicar evidencia |
+| BM25 | Método de ranking basado en términos y su frecuencia | Recuperador local sin embeddings ni API |
+| Embedding | Representación numérica aprendida para comparar significado aproximado | Experimento semántico opcional de clase 08 |
+| Cobertura | Evidencia para todas las partes de la pregunta | Envío y retiro necesitan dos fuentes |
+| Fidelidad | La afirmación conserva lo que dice la evidencia | No cambiar “cuesta USD 2.00” por “gratis” |
+| Recall | Proporción de documentos necesarios que recuperamos | Dos necesarios y uno encontrado: 1/2 |
+| Precisión | Proporción de documentos recuperados que eran pertinentes | Uno pertinente entre dos recuperados: 1/2 |
+| Presupuesto | Límite del trabajo permitido antes de detenerse | Tres consultas a fuentes y cuatro decisiones |
+| Traza | Registro de acciones y observaciones | Consulta original, resultado vacío y reformulación |
 | Kernel | Proceso de Python que guarda y ejecuta las celdas de un notebook | Reiniciar borra variables de la sesión |
 | Entorno virtual | Python y librerías aislados para este proyecto | Carpeta `.venv` |
 | Lockfile | Lista exacta de versiones y sus dependencias | `uv.lock`, usado con `uv sync --locked` |

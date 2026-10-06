@@ -5,13 +5,20 @@
 Se estudió `udacity/cd14525-agentic-workflows-classroom` en el commit
 `e6e3fa1c28dd91f0b86624312e2f9d5d31df9886`. El
 [análisis del origen](ANALISIS_AGENTIC_WORKFLOWS.md) registra hallazgos, correspondencia
-de conceptos y atribución. Se añadieron ocho clases originales, un puente de Python,
-un catálogo ficticio de tienda, glosario y un proyecto en dos fases con solución separada.
+de conceptos y atribución. Se añadieron diez clases originales, un puente de Python,
+un catálogo ficticio de tienda, glosario y dos proyectos con soluciones separadas.
 
 El recorrido cultural preexistente se conserva como ampliación. La ruta inicial
 usa reglas y guiones explicados; el router admite un experimento live opcional.
 Las verificaciones, sincronización y diagnóstico ahora incluyen subcarpetas de clases,
 con reportes separados y selección por recorrido. No se copiaron archivos de Udacity.
+
+Las clases 08/09 profundizan en ingesta, fragmentación, BM25, embeddings opcionales,
+cobertura, citas y fidelidad. Agentic RAG usa LangGraph para decidir, observar y
+reformular, o consultar catálogo, con presupuestos explícitos. Offline es una
+simulación declarada por reglas; live permite decisiones de un LLM. La comparación
+usa el mismo índice y `k=1`, registra consultas y no atribuye certeza a un juez LLM.
+Ver [RAG y Agentic RAG](RAG_Y_AGENTIC_RAG.md) y [modelos actuales](MODELOS.md).
 
 ## Revisión cultural preexistente
 

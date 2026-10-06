@@ -91,9 +91,11 @@ def revisar_env():
         ok(f"OPENAI_API_KEY configurada (termina en …{clave[-4:]})")
     else:
         aviso("OPENAI_API_KEY vacía: solo modo offline", "No hace falta para practicar.")
-    for rol in ("default", "agent"):
+    for rol in ("default", "agent", "rag", "embeddings"):
         nombre = model_name(rol)
-        if nombre in MODELOS_OPENAI:
+        conocidos = ({"text-embedding-3-large", "text-embedding-3-small"}
+                     if rol == "embeddings" else MODELOS_OPENAI)
+        if nombre in conocidos:
             ok(f"Modelo ({rol}): {nombre}")
         else:
             aviso(f"Modelo ({rol}) desconocido para el curso: {nombre}", "Revisá .env.example")

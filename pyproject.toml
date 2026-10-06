@@ -41,3 +41,4 @@ select = ["E4", "E7", "E9", "F", "I"]
 [tool.ruff.lint.per-file-ignores]
 # Ejercicios: variables preparadas para que la persona las use (F841).
 "clases/*.py" = ["E402", "F841"]
+"clases/*.ipynb" = ["E402", "F841"]

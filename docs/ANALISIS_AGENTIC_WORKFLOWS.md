@@ -27,11 +27,13 @@ conocimiento, routing y evaluación para producir un plan de desarrollo de produ
 | 10 · Repaso | 07 Proyecto y defensa | Decisiones y límites demostrados con casos |
 | Proyecto fase 1 | Proyecto Henry fase 1 | Biblioteca de funciones/contratos, reutilización permitida |
 | Proyecto fase 2 | Proyecto Henry fase 2 | Preparar pedido, revisar y decidir; contexto único y sencillo |
-| Conocimiento añadido y RAG del proyecto | Evidencia local en 01–02; RAG en recorrido ampliado | Recuperación por identificador no se presenta como embeddings ni RAG completo |
+| Conocimiento añadido y RAG del proyecto | Evidencia local en 01–02; profundización RAG en 08–09 y segundo proyecto | Fragmentación, BM25, embeddings opcionales, citas y recuperación iterativa explícitos |
 
 La cobertura es de conceptos: no se afirma que Henry replique los siete tipos de
 agentes del proyecto original. El recorrido ampliado preexistente complementa con
 LangChain, LangGraph, agentes con herramientas, revisión humana y Deep Agents.
+Las clases 08/09 son una profundización original añadida para trabajar RAG y
+Agentic RAG: no corresponden a dos lecciones adicionales del curso de Udacity.
 
 ## Hallazgos concretos de reproducción
 
@@ -80,6 +82,8 @@ No se agregó a Henry una licencia que otorgue derechos sobre el material de ori
   comparación de patrones y distinción entre workflows y agentes.
 - [concurrent.futures de Python](https://docs.python.org/3.13/library/concurrent.futures.html):
   futuros, executor y propagación de errores. Se usa `ThreadPoolExecutor`, compatible con Python 3.13.
+- [Agentic RAG de LangGraph](https://docs.langchain.com/oss/python/langgraph/agentic-rag):
+  recuperación, evaluación, reformulación y rutas condicionales de la profundización.
 - [Salida estructurada de LangChain](https://docs.langchain.com/oss/python/langchain/structured-output):
   contratos para la comparación live. La implementación concreta se contrastó también
   con `langchain-openai` instalado y se probó con un doble sin red.

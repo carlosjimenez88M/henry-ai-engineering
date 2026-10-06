@@ -28,10 +28,6 @@ MODELOS = {
         "uso": "Máxima capacidad: tareas largas y difíciles; usar con criterio",
     },
 }
-# Compatibilidad con la clase 00 y el diagnóstico preexistentes. Derivada de la
-# tabla central: no mantiene una segunda lista de modelos o precios.
-MODELOS_OPENAI = {nombre: datos["uso"] for nombre, datos in MODELOS.items()}
-
 MODELO_EMBEDDINGS = "text-embedding-3-large"
 MODELOS_VERIFICADOS_EL = "2026-10-06"
 MODELO_POR_DEFECTO = "gpt-6-luna"

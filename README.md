@@ -1,8 +1,8 @@
 # Henry · AI Engineering desde cero
 
 Empieza por **[Workflows de IA desde cero](clases/agentic_workflows/README.md)**:
-ocho clases en español con una tienda de barrio ficticia, Python básico, ejemplos
-visibles, talleres, soluciones y un proyecto. Esta ruta introduce los conceptos
+diez clases en español con una tienda de barrio ficticia, Python básico, ejemplos
+visibles, talleres, soluciones y dos proyectos. Esta ruta introduce los conceptos
 estudiados en `cd14525-agentic-workflows-classroom` con material original para un
 público latino que comienza con IA. Funciona sin clave ni consumo de API.
 
@@ -17,7 +17,7 @@ público latino que comienza con IA. Funciona sin clave ni consumo de API.
    ```
 
 3. Abre [00 · Python para empezar](clases/agentic_workflows/00_python_para_empezar.ipynb)
-   con el kernel `.venv` y sigue el [orden de las ocho clases](clases/agentic_workflows/README.md).
+   con el kernel `.venv` y sigue el [orden de las diez clases](clases/agentic_workflows/README.md).
    Si conoces Python, completa su taller y comienza en la clase 01.
 
 El recorrido trabaja herramientas, modelado, cadena, routing, paralelismo,
@@ -26,64 +26,46 @@ un LLM en la clase 03. La versión gratuita usa reglas y guiones explícitos: no
 modelos reales. El [proyecto en dos fases](proyectos/tienda_workflows/README.md)
 tiene plantilla, solución separada, rúbrica y diez casos de evaluación.
 
+Las clases [08 · RAG](clases/agentic_workflows/08_rag_desde_cero.ipynb) y
+[09 · Agentic RAG](clases/agentic_workflows/09_agentic_rag.ipynb) añaden ingesta,
+fragmentación, BM25, embeddings opcionales, cobertura, citas y fidelidad. El agente
+puede reformular, reunir fuentes y consultar stock con límites explícitos.
+El [proyecto RAG](proyectos/tienda_rag/README.md) compara ambas estrategias con
+doce casos. En offline sus decisiones son reglas; en live decide un LLM.
+
 [Guía docente inicial](docs/GUIA_DOCENTE_WORKFLOWS.md) ·
 [Glosario](docs/GLOSARIO_WORKFLOWS.md) ·
 [Estudio del origen](docs/ANALISIS_AGENTIC_WORKFLOWS.md)
 
-## Recorrido ampliado: LangGraph y Deep Agents
+[Guía RAG y Agentic RAG](docs/RAG_Y_AGENTIC_RAG.md) ·
+[Modelos actuales por rol](docs/MODELOS.md)
 
-**Seis notebooks, cada uno una clase completa**, para personas que empiezan en IA aplicada.
-Cada notebook trae explicación, código por etapas, predicciones, experimentos, dos pausas,
-un taller, soluciones y un ticket de salida. Todo funciona **sin clave de API** (modo
-offline) y, opcionalmente, con los modelos **GPT-6** de OpenAI (modo live).
+## Recorrido ampliado: LangGraph, agentes y Deep Agents (ruta avanzada)
 
-Construimos un archivo cultural con escenarios inventados de Batman, los Cuatro
-Fantásticos, El Chavo del Ocho y canciones ficticias. No hace falta conocer esas obras.
-No se incluyen letras, audio, páginas de cómics ni episodios originales.
+**Ocho clases** que continúan la ruta inicial: del bucle de agente escrito a mano hasta un
+equipo de Deep Agents que planifica, delega y pide permiso. Todo funciona **sin clave de API**
+(offline: herramientas, grafos y aprobaciones reales; el modelo se reemplaza por reglas
+visibles) y el docente puede demostrarlo con **GPT-6** (live). Usa un archivo de fichas
+ficticias (Batman, los Cuatro Fantásticos, El Chavo y canciones inventadas, sin letras).
 
-## Empezar el recorrido ampliado
+**Requisito:** la ruta inicial (`clases/agentic_workflows/`) o saber Python básico.
+Abre `clases/00_mundo_agentico.ipynb`, elige el kernel **`.venv`** y ejecuta con Shift + Enter.
 
-1. Seguí **[docs/INSTALACION.md](docs/INSTALACION.md)**: VS Code + extensiones Python y
-   Jupyter + `uv`, paso a paso, con solución de problemas frecuentes.
-2. En la terminal de VS Code, dentro de esta carpeta:
-
-   ```bash
-   uv sync --locked
-   uv run python scripts/doctor.py
-   ```
-
-3. Abrí `clases/00_mundo_agentico.ipynb`, elegí el kernel **`.venv`** y ejecutá con Shift + Enter.
-
-## Las clases
-
-| Clase | Lo que construimos y aprendemos | Notebook | Script |
+| Clase | Pregunta y construcción | Notebook | Script |
 |---|---|---|---|
-| 0 · Mundo agéntico | LLM, token, prompt, herramienta, agente, workflow; escalera de autonomía; modelos GPT-6 y costos; primer agente | [Abrir](clases/00_mundo_agentico.ipynb) | [Python](clases/00_mundo_agentico.py) |
-| 1 · Una herramienta confiable | Contrato Pydantic, búsqueda, filtros, ranking, límites, IDs y tool calling | [Abrir](clases/01_fundamentos.ipynb) | [Python](clases/01_fundamentos.py) |
-| 2 · RAG y primeros grafos | Evidencia, salida estructurada, validación de fuentes, estado, secuencia y routing | [Abrir](clases/02_langchain_rag.ipynb) | [Python](clases/02_langchain_rag.py) |
-| 3 · Orquestación | Paralelismo, Send, reducers, agente a mano y con `create_agent` + middleware, supervisor con `Command` | [Abrir](clases/03_multiagente_langgraph.ipynb) | [Python](clases/03_multiagente_langgraph.py) |
-| 4 · Revisión y evaluación | Ciclo acotado, referencias inválidas, interrupt/resume, aprobación/rechazo y reporte | [Abrir](clases/04_produccion_llmops.ipynb) | [Python](clases/04_produccion_llmops.py) |
-| 5 · Deep Agents | Plan (`write_todos`), archivos virtuales, subagentes en paralelo (`task`), aprobación humana, verificación de citas | [Abrir](clases/05_deep_agents.ipynb) | [Python](clases/05_deep_agents.py) |
+| 0 · Mundo agéntico | ¿Qué es un agente y cuándo no usarlo? Escalera de autonomía, GPT-6 y costo | [Abrir](clases/00_mundo_agentico.ipynb) | [Python](clases/00_mundo_agentico.py) |
+| 1 · Herramientas y bucle | Contrato de `buscar_archivo` y el bucle del agente escrito a mano | [Abrir](clases/01_herramientas_y_bucle.ipynb) | [Python](clases/01_herramientas_y_bucle.py) |
+| 2 · RAG con evidencia | Salida estructurada, validación de citas, palabras vs significado (embeddings) | [Abrir](clases/02_rag_con_evidencia.ipynb) | [Python](clases/02_rag_con_evidencia.py) |
+| 3 · Workflows en LangGraph | Estado, secuencia, routing, paralelo, `Send` + reducer | [Abrir](clases/03_workflows_langgraph.ipynb) | [Python](clases/03_workflows_langgraph.py) |
+| 4 · Agentes confiables | `create_agent`, límites, streaming, memoria, fallas, inyección de prompts, costo | [Abrir](clases/04_agentes.ipynb) | [Python](clases/04_agentes.py) |
+| 5 · Multiagente | Supervisor, agentes como herramientas y handoff | [Abrir](clases/05_multiagente.ipynb) | [Python](clases/05_multiagente.py) |
+| 6 · Evaluación y humano | Evaluador–optimizador, interrupt/resume, casos, juez LLM calibrado | [Abrir](clases/06_evaluacion_y_humano.ipynb) | [Python](clases/06_evaluacion_y_humano.py) |
+| 7 · Deep Agents | Plan, archivos virtuales, subagentes acotados, aprobación y streaming | [Abrir](clases/07_deep_agents.ipynb) | [Python](clases/07_deep_agents.py) |
 
-**Profundidad con acompañamiento:** no se pide escribir todo desde cero ni memorizar
-APIs. Cada bloque exige una predicción, una modificación o una comprobación.
-
-## Qué arquitecturas se trabajan
-
-| Patrón | Nivel de trabajo |
-|---|---|
-| Secuencia y routing | Construcción guiada y comparación en clase 2 |
-| Paralelismo fijo y orquestador–workers | Construcción guiada con pruebas en clase 3 |
-| Agente con herramientas | Hecho a mano y con `create_agent` + límites como middleware, clase 3 |
-| Supervisor | Construido con `Command` y límite de delegaciones en clase 3; en live decide GPT-6 |
-| Evaluador–optimizador | Construcción y falla inyectada en clase 4 |
-| Revisión humana y checkpoints | Construida a mano en clase 4; integrada con `interrupt_on` en clase 5 |
-| Deep agent (coordinador + subagentes) | Construcción guiada en clase 5 |
-| Handoff | Comparación conceptual; no se presenta como implementación completa |
-
-Consultar el [mapa de arquitecturas](docs/ARQUITECTURAS.md). Un worker no es necesariamente
-un agente y un grafo no implica que un LLM tome decisiones. El material distingue reglas,
-planes explícitos y decisiones del modelo.
+Proyecto acumulativo: [Asistente del Archivo](proyectos/asistente_archivo/README.md).
+Soluciones de los ejercicios: `soluciones/` (se ven con `ver_solucion(...)` desde el notebook).
+Diseño y convenciones: [docs/DISENO_RUTA_AVANZADA.md](docs/DISENO_RUTA_AVANZADA.md) ·
+[Guía docente](docs/GUIA_DOCENTE.md) · [Mapa de arquitecturas](docs/ARQUITECTURAS.md).
 
 ## Modos y modelos
 
@@ -97,12 +79,15 @@ fallback silencioso. Modelos por defecto (revisar precios antes de cada cohorte)
 
 | Variable | Modelo | Uso | USD por millón de tokens (entrada/salida) |
 |---|---|---|---|
-| `OPENAI_MODEL` | `gpt-6-luna` | Clases 0–4, especialistas de la clase 5 | 0.10 / 0.50 |
-| `OPENAI_MODEL_AGENT` | `gpt-6.1-sol` | Coordinador del deep agent | 2 / 10 |
+| `OPENAI_MODEL` | `gpt-6-luna` | Actividades breves y especialistas | 0.10 / 0.50 |
+| `OPENAI_MODEL_AGENT` | `gpt-6.1-sol` | Coordinadores y Agentic RAG | 2 / 10 |
+| `OPENAI_MODEL_RAG` | `gpt-6-luna` | Respuesta RAG y revisión de fidelidad | 0.10 / 0.50 |
+| `OPENAI_EMBEDDING_MODEL` | `text-embedding-3-large` | Experimento de embeddings | Ver documentación oficial |
 | — | `gpt-6-astra` | Opcional para demostraciones exigentes | 10 / 50 |
 
 Se usa la Responses API de OpenAI y `OPENAI_REASONING_EFFORT=low` (configurable).
 Reiniciar el kernel si cambian las variables de entorno. No publicar el `.env`.
+Verificados el 6 de octubre de 2026; [fuentes y compatibilidad](docs/MODELOS.md).
 
 ## La herramienta central
 
@@ -119,12 +104,14 @@ la usan el agente de la clase 0, los grafos de las clases 2–4 y los subagentes
 uv run python scripts/doctor.py           # Diagnóstico del entorno (también revisa VS Code)
 uv run python scripts/doctor.py --live    # + una llamada mínima a OpenAI
 uv run pytest -q                          # Contratos, grafos, agentes, límites y aprobaciones
-uv run ruff check src scripts tests clases proyectos
-uv run python scripts/verify.py --mode offline   # 14 scripts + 14 notebooks en kernels nuevos
-uv run python scripts/verify.py --mode offline --track workflows  # Solo las 8 clases iniciales
-uv run python scripts/verify.py --mode offline --track advanced   # Solo las 6 ampliadas
+uv run ruff check src scripts tests clases proyectos soluciones
+uv run python scripts/verify.py --mode offline   # 18 scripts y 18 notebooks, kernels nuevos
+uv run python scripts/verify.py --mode offline --track workflows  # Las 10 clases iniciales
+uv run python scripts/verify.py --mode offline --track advanced   # Solo las 8 de la ruta avanzada
 uv run python scripts/evaluate_workflows.py      # 10 casos del proyecto inicial
-uv run python scripts/verify.py --mode live      # Lo mismo con OpenAI; consume API
+uv run python scripts/evaluate_rag.py --mode offline  # 12 casos: RAG y Agentic RAG
+uv run python scripts/verify.py --mode live --track advanced  # OpenAI; consume API
+uv run python scripts/evaluate_rag.py --mode live --case RAG-06 # RAG con LLM
 uv run python scripts/sync_notebooks.py          # .py → notebooks sin outputs
 uv run python scripts/sync_notebooks.py --desde-notebooks  # traer ediciones del notebook al .py
 ```
@@ -135,18 +122,23 @@ Los `.py` en formato Jupytext percent son la fuente editable. Los notebooks se g
 outputs. Los ejecutados, logs y reportes quedan en `reports/`, fuera de Git. Cada
 verificación registra fecha, versiones, huellas SHA-256 y estado de cada recorrido.
 [Informe de validación](VALIDACION.md).
+Los experimentos opcionales de las clases iniciales vienen apagados: la verificación
+no activa sus banderas automáticamente.
 
 ## Organización
 
-- `clases/agentic_workflows/`: ocho pares notebook/script para empezar y su índice.
-- `clases/0*.py` y `.ipynb`: seis pares del recorrido ampliado.
+- `clases/agentic_workflows/`: diez pares notebook/script para empezar y su índice.
+- `clases/0*.py` y `.ipynb`: ocho pares de la ruta avanzada; `soluciones/`: sus soluciones.
 - `proyectos/tienda_workflows/`: consigna, plantilla y solución del integrador inicial.
+- `proyectos/tienda_rag/`: comparación entre RAG y Agentic RAG, consigna y solución.
 - `src/henry_agents/workflows.py`: herramientas y patrones de la tienda ficticia.
+- `src/henry_agents/rag.py`: ingesta, recuperadores, citas, fidelidad y grafo Agentic RAG.
 - `src/henry_agents/cultural.py`: herramienta, contratos, agente a mano, equipo y revisión.
-- `src/henry_agents/agentic.py`: `create_agent` con límites, Deep Agent, `ModeloGuionado`,
-  línea de tiempo de mensajes y dibujo de grafos con o sin Internet.
+- `src/henry_agents/agentic.py`: cerebros offline (`ModeloReglas`, con fallas a propósito),
+  `create_agent` con límites, Deep Agent acotado, streaming, línea de tiempo y dibujo de grafos.
+- `src/henry_agents/semantica.py` y `practica.py`: búsqueda por significado y autocorrección.
 - `src/henry_agents/config.py`: modos, modelos GPT-6 y parámetros de OpenAI.
-- `src/henry_agents/data/`: doce escenarios ficticios y diez casos de evaluación.
+- `src/henry_agents/data/`: corpus ficticios, catálogo, manual RAG y casos de evaluación.
 - `tests/`: pruebas del caso cultural, de los agentes modernos y de la verificación.
   Otros módulos/tests conservan ejemplos de soporte y ventas de revisiones anteriores.
 - `docs/`: instalación, guías docentes por recorrido, glosario, estudio del origen,

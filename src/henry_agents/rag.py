@@ -107,13 +107,16 @@ class IndiceVectorial(IndiceLexico):
             configure("live")
             embeddings = OpenAIEmbeddings(model=model_name("embeddings"), max_retries=1)
         self.store = InMemoryVectorStore(embedding=embeddings)
-        self.store.add_documents([
-            Document(page_content=f["texto"], metadata=f) for f in self.fragments
-        ])
+        if self.fragments:
+            self.store.add_documents([
+                Document(page_content=f["texto"], metadata=f) for f in self.fragments
+            ])
 
     def buscar(self, consulta, categoria="todos", k=2):
         # Reutilizar los contratos, sin presentar BM25 como la búsqueda vectorial.
         super().buscar(consulta, categoria, k)
+        if not self.fragments:
+            return []
         found = self.store.similarity_search_with_score(
             consulta, k=k,
             filter=(lambda d: d.metadata["categoria"] == categoria) if categoria != "todos" else None,

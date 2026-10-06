@@ -96,4 +96,5 @@ print("Casos correctos:", sum(r["correcto"] for r in resultados), "de", len(resu
 # Los diez casos solo cubren estos comportamientos con estos datos ficticios.
 #
 # Para continuar con agentes reales y grafos, vuelve al README y sigue el recorrido
-# existente: `clases/00_mundo_agentico.ipynb` a `clases/05_deep_agents.ipynb`.
+# ampliado: `clases/00_mundo_agentico.ipynb` a `clases/07_deep_agents.ipynb`.
+# Antes, continúa con 08 · RAG desde cero y 09 · Agentic RAG de esta ruta inicial.
