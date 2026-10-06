@@ -8,6 +8,7 @@ import operator
 from importlib.resources import files
 from typing import Annotated, Literal, TypedDict
 
+from langchain_core.exceptions import OutputParserException
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.tools import tool
 from langgraph.checkpoint.memory import InMemorySaver
@@ -149,11 +150,15 @@ def compose(result: SearchResult, mode=None, config=None, *, prompt=None):
             text="\n".join(f"[{h.id}] {h.text}" for h in result.hits),
             source_ids=[h.id for h in result.hits],
         )
-    response = (
-        chat_model()
-        .with_structured_output(GroundedAnswer)
-        .invoke(messages, config=config)
-    )
+    try:
+        response = (
+            chat_model()
+            .with_structured_output(GroundedAnswer)
+            .invoke(messages, config=config)
+        )
+    except OutputParserException:
+        # El modelo devolvió algo que no respeta el esquema: abstenerse, no adivinar.
+        return GroundedAnswer(text="La respuesta del modelo no respetó el formato.", source_ids=[])
     allowed = {h.id for h in result.hits}
     if not response.source_ids or not set(response.source_ids) <= allowed:
         return GroundedAnswer(text="La respuesta no pasó la validación de fuentes.", source_ids=[])

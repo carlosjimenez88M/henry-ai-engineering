@@ -95,3 +95,31 @@ def test_missing_distribution_invalidates_previous_success(verifier, sample_repo
     assert saved == report and saved["run_id"] != "old"
     assert saved["status"] == "failed" and saved["finished_at"]
     assert saved["error_type"] == "PackageNotFoundError"
+
+
+def test_nested_classes_are_executed_and_names_do_not_collide(verifier, sample_repo, monkeypatch):
+    nested = sample_repo / "clases/agentic_workflows/01_demo.py"
+    nested.parent.mkdir()
+    nested.write_text('# %%\nprint("nested")\n')
+    nbformat.write(jupytext.read(nested), nested.with_suffix(".ipynb"))
+    monkeypatch.setattr(verifier, "execute_script", lambda *args: None)
+    monkeypatch.setattr(verifier, "execute_notebook", lambda *args: None)
+    reporte = verifier.run_verification(sample_repo, "offline")
+    assert reporte["status"] == "passed" and len(reporte["results"]) == 5
+    assert "agentic_workflows/01_demo" in {r["class"] for r in reporte["results"]}
+    output = sample_repo / "reports/offline"
+    assert verifier.artifact_path(nested, sample_repo, output, ".log") == (
+        output / "agentic_workflows/01_demo.log"
+    )
+    assert len(verifier.validate_pairs(sample_repo, "workflows")) == 1
+    assert len(verifier.validate_pairs(sample_repo, "advanced")) == 4
+
+
+def test_nested_stale_notebook_is_not_skipped(verifier, sample_repo):
+    nested = sample_repo / "clases/agentic_workflows/00_nested.py"
+    nested.parent.mkdir()
+    nested.write_text('# %%\nprint("old")\n')
+    nbformat.write(jupytext.read(nested), nested.with_suffix(".ipynb"))
+    nested.write_text('# %%\nprint("new")\n')
+    with pytest.raises(ValueError, match="desactualizado"):
+        verifier.validate_pairs(sample_repo)

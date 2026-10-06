@@ -32,7 +32,8 @@ MODELOS = {
 # tabla central: no mantiene una segunda lista de modelos o precios.
 MODELOS_OPENAI = {nombre: datos["uso"] for nombre, datos in MODELOS.items()}
 
-MODELO_EMBEDDINGS = "text-embedding-3-small"  # $0.02 por millón de tokens
+MODELO_EMBEDDINGS = "text-embedding-3-large"
+MODELOS_VERIFICADOS_EL = "2026-10-06"
 MODELO_POR_DEFECTO = "gpt-6-luna"
 MODELO_AGENTE_POR_DEFECTO = "gpt-6.1-sol"
 
@@ -51,11 +52,18 @@ def configure(mode=None):
 
 
 def model_name(role="default"):
-    """Modelo según el rol: 'default' (clases y especialistas) o 'agent' (coordinadores)."""
-    configure()
-    if role == "agent":
-        return os.getenv("OPENAI_MODEL_AGENT") or MODELO_AGENTE_POR_DEFECTO
-    return os.getenv("OPENAI_MODEL") or MODELO_POR_DEFECTO
+    """Nombre por rol; consultar un nombre no requiere clave ni hace llamadas."""
+    load_dotenv(ROOT / ".env", override=False)
+    roles = {
+        "default": ("OPENAI_MODEL", MODELO_POR_DEFECTO),
+        "agent": ("OPENAI_MODEL_AGENT", MODELO_AGENTE_POR_DEFECTO),
+        "rag": ("OPENAI_MODEL_RAG", MODELO_POR_DEFECTO),
+        "embeddings": ("OPENAI_EMBEDDING_MODEL", MODELO_EMBEDDINGS),
+    }
+    if role not in roles:
+        raise ValueError(f"Rol desconocido: {role}")
+    variable, fallback = roles[role]
+    return os.getenv(variable) or fallback
 
 
 def chat_model(role="default", **overrides):
@@ -67,6 +75,8 @@ def chat_model(role="default", **overrides):
     """
     from langchain_openai import ChatOpenAI
 
+    if role == "embeddings":
+        raise ValueError("Los embeddings usan OpenAIEmbeddings, no un modelo de chat")
     configure("live")
     nombre = overrides.pop("model", None) or model_name(role)
     effort = overrides.pop("reasoning_effort", None) or os.getenv("OPENAI_REASONING_EFFORT") or "low"

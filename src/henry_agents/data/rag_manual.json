@@ -1,0 +1,14 @@
+[
+  {"id": "ENVIO-2026", "titulo": "Entregas de La Esquina", "categoria": "entregas", "vigente": true,
+   "texto": "El envío a Centro cuesta USD 2.00 y el envío a Norte cuesta USD 3.00. La cobertura de entregas incluye únicamente Centro y Norte. No se ofrece entrega en Sur. Los montos y barrios de La Esquina son ficticios. Una propuesta de entrega no garantiza horario ni confirma una compra."},
+  {"id": "RETIRO-2026", "titulo": "Retiro en la tienda", "categoria": "retiro", "vigente": true,
+   "texto": "El retiro de un pedido en La Esquina es gratuito: su costo es USD 0.00. La persona que atiende debe confirmar el pedido antes de prepararlo. Se puede recoger durante el horario de atención de la tienda. Retirar un pedido no requiere una consulta de cobertura de envío."},
+  {"id": "CAMBIOS-2026", "titulo": "Cambios de cuadernos", "categoria": "cambios", "vigente": true,
+   "texto": "Los cambios de cuadernos sin uso se solicitan dentro de 7 días con comprobante de compra. El cuaderno debe conservar sus hojas completas. Una persona revisa la solicitud antes de aceptar el cambio. Esta política no describe cambios de alimentos ni garantías de electrodomésticos; no se debe extender a otros productos."},
+  {"id": "HORARIO-2026", "titulo": "Horario de atención", "categoria": "horario", "vigente": true,
+   "texto": "El horario ficticio de atención es de lunes a sábado, de 09:00 a 18:00. La tienda no atiende los domingos. El horario de atención no es una promesa de hora de entrega. Consultar horarios no confirma stock, reservas ni disponibilidad de productos."},
+  {"id": "PAGOS-2026", "titulo": "Formas de pago", "categoria": "pagos", "vigente": true,
+   "texto": "En este escenario ficticio se acepta pago en efectivo al retirar el pedido. La aplicación de clase no procesa pagos con tarjeta ni transferencias. Ninguna respuesta de un asistente confirma que se haya cobrado. No se solicitan números de tarjeta, claves bancarias ni información personal para ejecutar estos ejercicios."},
+  {"id": "ENVIO-2025", "titulo": "Entregas: política archivada", "categoria": "entregas", "vigente": false,
+   "texto": "La antigua política ficticia indicaba envío gratuito a Centro. Este documento está archivado y no debe usarse para responder preguntas sobre la política vigente."}
+]
