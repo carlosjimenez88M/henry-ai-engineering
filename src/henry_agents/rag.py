@@ -314,6 +314,8 @@ class EstadoAgenticRAG(TypedDict, total=False):
     respuesta: str
     fuentes: list[str]
     afirmaciones: list[dict]
+    revision_fidelidad: dict
+    modo: str
 
 
 def estado_inicial(pregunta, necesidades=None):
@@ -438,11 +440,13 @@ def crear_nodos_rag(*, mode="offline", indice=None, decisor=None, modelo=None,
     def responder(estado):
         result = finalizar(estado["pregunta"], estado["necesidades"], estado["evidencia"],
                            mode, modelo_respuesta)
-        return {**result, "llamadas_llm": estado["llamadas_llm"] + result["llamadas_llm"],
+        return {**result, "modo": mode,
+                "llamadas_llm": estado["llamadas_llm"] + result["llamadas_llm"],
                 "eventos": estado["eventos"] + [{"nodo": "responder", "estado": result["estado"]}]}
 
     def abstenerse(estado):
-        return {"estado": "abstencion", "respuesta": "No puedo responder con evidencia suficiente.",
+        return {"estado": "abstencion", "modo": mode,
+                "respuesta": "No puedo responder con evidencia suficiente.",
                 "fuentes": [], "afirmaciones": [],
                 "eventos": estado["eventos"] + [{"nodo": "abstenerse", "causa": estado["causa"]}]}
 

@@ -1,0 +1,14 @@
+[
+  {"id": "RAG-01", "pregunta": "¿Cuánto cuesta el envío a Centro?", "clasico": "respondido", "agentico": "respondido", "documentos": ["ENVIO-2026"]},
+  {"id": "RAG-02", "pregunta": "¿El retiro es gratuito?", "clasico": "respondido", "agentico": "respondido", "documentos": ["RETIRO-2026"]},
+  {"id": "RAG-03", "pregunta": "¿Cuál es la política de cambios de cuadernos?", "clasico": "respondido", "agentico": "respondido", "documentos": ["CAMBIOS-2026"]},
+  {"id": "RAG-04", "pregunta": "¿Cuál es el horario de atención?", "clasico": "respondido", "agentico": "respondido", "documentos": ["HORARIO-2026"]},
+  {"id": "RAG-05", "pregunta": "¿Aceptan pago en efectivo?", "clasico": "respondido", "agentico": "respondido", "documentos": ["PAGOS-2026"]},
+  {"id": "RAG-06", "pregunta": "¿Hacen mandados?", "clasico": "abstencion", "agentico": "respondido", "documentos": ["ENVIO-2026"]},
+  {"id": "RAG-07", "pregunta": "¿Cuánto cuesta el envío a Centro y cómo retiro mi pedido?", "clasico": "abstencion", "agentico": "respondido", "documentos": ["ENVIO-2026", "RETIRO-2026"]},
+  {"id": "RAG-08", "pregunta": "¿Cuál es el stock de arroz?", "clasico": "abstencion", "agentico": "respondido", "documentos": ["CAT-ARROZ"]},
+  {"id": "RAG-09", "pregunta": "¿Hay stock de arroz y envío a Centro?", "clasico": "abstencion", "agentico": "respondido", "documentos": ["CAT-ARROZ", "ENVIO-2026"]},
+  {"id": "RAG-10", "pregunta": "¿Qué garantía tiene un televisor?", "clasico": "abstencion", "agentico": "abstencion", "documentos": []},
+  {"id": "RAG-11", "pregunta": "¿El envío a Centro es gratis?", "clasico": "respondido", "agentico": "respondido", "documentos": ["ENVIO-2026"]},
+  {"id": "RAG-12", "pregunta": "¿Qué horario tienen los domingos?", "clasico": "respondido", "agentico": "respondido", "documentos": ["HORARIO-2026"]}
+]
