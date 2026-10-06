@@ -1,231 +1,107 @@
-# Guía docente · AI Engineering aplicado, seis clases
+# Guía docente · Ruta avanzada (8 clases)
 
 Esta guía corresponde al **recorrido ampliado** de LangGraph y Deep Agents.
 Para personas que recién comienzan, usa primero la
-[guía de las ocho clases iniciales](GUIA_DOCENTE_WORKFLOWS.md) y su
+[guía de las diez clases iniciales](GUIA_DOCENTE_WORKFLOWS.md) y su
 [ruta de workflows](../clases/agentic_workflows/README.md).
 
-## Crítica de la versión anterior y cambio de criterio
+Diseño, convenciones y API de apoyo: [DISENO_RUTA_AVANZADA.md](DISENO_RUTA_AVANZADA.md).
+Proyecto acumulativo: [Asistente del Archivo](../proyectos/asistente_archivo/README.md).
 
-La versión anterior favorecía el arranque, pero escondía demasiada implementación
-tras helpers y reducía varios ejercicios a cambiar una cadena. Faltaban actividades
-que exigieran explicar decisiones, comparar alternativas y mostrar cómo falla una
-decisión de arquitectura.
+## Antes de la primera clase
 
-Esta revisión profundiza construyendo, contrastando y comprobando. Los notebooks
-incluyen las explicaciones necesarias: la guía orienta la facilitación, pero no
-contiene una mitad de la clase que el estudiante deba buscar en otro archivo.
+- Instalación con apoyo, siguiendo [INSTALACION.md](INSTALACION.md). Las dos causas más
+  comunes de "los notebooks no corren en VS Code" son que falta la extensión **Jupyter** o que
+  el kernel no es `.venv`. `uv run python scripts/doctor.py` detecta ambas.
+- Quien no completó la ruta 1 necesita, como mínimo, su clase 00 de Python.
+- Docente con clave: `uv run python scripts/doctor.py --live` y
+  `uv run python scripts/verify.py --mode live --track advanced` antes de cada cohorte.
+  Revisar precios de GPT-6 en `src/henry_agents/config.py` (única fuente).
 
-No se exige aprender todas las arquitecturas al mismo nivel. Secuencia, routing,
-paralelismo, workers y revisión se construyen; el agente se demuestra e inspecciona;
-supervisor y handoff se comparan como contratos de diseño. Esa diferencia evita
-simular cobertura exhaustiva para un público principiante.
+## Cómo se usa cada clase
 
-## Acompañamiento y carga cognitiva
+- **Ritmo:** 🔮 predecir → ▶️ ejecutar → 🔍 observar. Pedir la predicción en voz alta o por
+  escrito antes de ejecutar; no saltear ese paso: es donde ocurre el aprendizaje.
+- **Ejercicios ✏️:** la celda incompleta corre sin error y la revisión muestra ✅ o una pista.
+  La solución se ve con `ver_solucion("...")`. Pedir que la miren **después** de intentar y que
+  expliquen una diferencia con su versión.
+- **Dos pausas ☕** por clase. Tras cada pausa hay un bloque nuevo, no una continuación a medias.
+- **Offline es la experiencia de estudiantes.** El cerebro `reglas-offline` decide con reglas
+  visibles; todo lo demás es real. Decirlo con claridad la primera vez y cuando aparezca.
+- **Live es una demostración docente.** Mostrar 1–2 momentos por clase con GPT-6 (sugeridos
+  abajo) y comparar con offline: qué cambió, qué se mantuvo y por qué las comprobaciones
+  de valores exactos solo corren offline.
+- Si alguien se pierde: preguntar qué fue lo último que funcionó y reejecutar las celdas desde
+  el título de esa sección, en orden. Los cerebros offline no guardan estado, así que
+  reejecutar no cambia los resultados.
 
-Cada sesión incluye dos pausas. Los notebooks presentan un recorrido temático
-con actividades concretas. Los bloques de práctica son actividad, no monólogo.
-Antes de cada celda: anticipar. Después: observar, explicar y cambiar una sola cosa.
+## Clase 0 · Mundo agéntico
 
-Las dificultades de atención no implican menor capacidad. Estas adaptaciones no
-son una intervención clínica. Consultar preferencias, permitir chat/oralidad/texto,
-no forzar exposición sorpresiva y no premiar velocidad. Dar espacio para pensar
-antes de pedir respuestas. Usar tamaño de letra legible y pocas ventanas abiertas.
+**Anclas:** el modelo propone, el programa ejecuta; workflow antes que agente; el costo importa.
+**Momento live:** la primera llamada y el agente con un pedido de la clase.
+**Error útil:** creer que el *system prompt* es una barrera de seguridad (se retoma en la 4).
 
-El código está preparado: no se copia a la velocidad del docente. En cada bloque
-se destacan pocas líneas y su relación con un dibujo o un dato. Hay pistas y puntos
-de reenganche antes de las pausas. Las soluciones se revisan después del intento,
-comparando una diferencia concreta. No improvisar una página en blanco de 50 líneas.
+## Clase 1 · Herramientas y bucle
 
-Preparar el entorno antes, con ayuda, siguiendo `docs/INSTALACION.md`. La causa más
-común de "los notebooks no corren en VS Code" es que falta la extensión **Jupyter** o que
-el kernel elegido no es `.venv`; `scripts/doctor.py` detecta ambas. Offline permite
-participar sin claves ni cuentas. El docente puede mostrar live explicando claramente cuál usa un modelo.
-Si alguien no puede ejecutar, trabaja con una pareja o documenta sus predicciones;
-no se califica la instalación como comprensión de arquitectura.
+**Anclas:** contrato, error de entrada ≠ falta de evidencia, el bucle cabe en 15 líneas.
+**Momento live:** el bucle a mano con GPT-6 Luna; mirar cuántas vueltas da.
+**Error útil:** `argumentos_invalidos` muestra cómo el error vuelve al modelo y este se
+corrige; `bucle` muestra por qué la condición de parada no es opcional.
 
-## Clase 0 · Bienvenida al mundo agéntico
+## Clase 2 · RAG con evidencia
 
-**Tres anclas:** el modelo propone, el programa ejecuta; workflow antes que agente; costo.
-**Producto:** entorno funcionando, un agente observado en una línea de tiempo y una
-clasificación justificada de cinco situaciones.
+**Anclas:** recuperar → aumentar → generar; forma válida ≠ contenido correcto; palabras vs significado.
+**Momento live:** la salida estructurada real y la búsqueda con embeddings reales
+(`OPENAI_EMBEDDING_MODEL`, por defecto `text-embedding-3-large`; medir consumo).
+**Error útil:** una cita inventada que Pydantic acepta y la validación con conjuntos rechaza.
+La comparación final mantiene corpus y `k=1` y muestra el costo de recuperar otra
+fuente. Para profundizar, utiliza las clases iniciales 08/09 y la
+[guía de RAG y Agentic RAG](RAG_Y_AGENTIC_RAG.md).
 
-- **Entorno:** la primera celda dice si el kernel es `.venv`. Resolver aquí, no en la clase 1.
-- **Cinco palabras:** LLM, token, prompt, herramienta, agente. Usar la analogía receta
-  (workflow) frente a cocinero (agente). No avanzar si alguien cree que el modelo "ejecuta" código.
-- **Escalera de autonomía:** ubicar cada clase del módulo en un escalón. Preguntar por qué
-  no empezar por el escalón más alto.
-- **Pausa.**
-- **Modelos GPT-6:** Luna, Sol y Astra; calcular el costo de un curso con cada uno. El
-  objetivo es que "elegir modelo" se vea como decisión de ingeniería.
-- **Primer agente:** `create_agent` con límites; leer la línea de tiempo (👤 🤖 🔧) en voz alta.
-- **Pausa.**
-- **Taller workflow o agente:** lo importante es la razón, no la etiqueta.
+## Clase 3 · Workflows en LangGraph
 
-**Error útil:** creer que el *system prompt* es una barrera de seguridad. **Profundidad:**
-los límites reales están en el código (herramientas disponibles, middleware, aprobaciones).
+**Anclas:** estado, nodos que devuelven cambios, aristas; el patrón ya lo conocen de la ruta 1.
+**Momento live:** el nodo responder con GPT-6; el grafo y sus rutas no cambian.
+**Error útil:** sin reducer, dos workers que escriben el mismo campo chocan.
 
-## Clase 1 · Herramienta confiable
+## Clase 4 · Agentes confiables
 
-**Tres anclas:** contrato, ejecución y evidencia.
-**Producto:** consulta filtrada con IDs, límite y rechazo de entrada inválida.
+**Anclas:** límites como middleware, memoria = mensajes del hilo, salida estructurada,
+defensa en profundidad.
+**Momento live:** ver un agente real en streaming; probar la reseña envenenada con GPT-6 y
+discutir que resistir hoy no garantiza resistir siempre: por eso la aprobación humana.
+**Error útil:** el laboratorio de fallas; cada falla con su defensa en código.
 
-- **Problema y resultado:** plantear el pedido y mostrar el resultado terminado. Preguntar qué haría un
-  sistema si no encuentra una ficha; no empezar enumerando librerías.
-- **Búsqueda mínima:** construir buscar_minimo. Seguir una fila a mano, cambiar el tema y mostrar
-  el fallo por tilde. Pedir una condición de filtro antes de enseñar la solución.
-- **Pausa.**
-- **Contrato y búsqueda:** usar Pydantic y recorrer validar → normalizar → filtrar → puntuar → limitar.
-  Leer el contrato definido en el notebook, comprobar top_k y ausencia de resultados.
-  Separar score de probabilidad.
-- **Llamada a la herramienta:** observar un tool call. Está forzado en esta demo; explicar que eso no prueba
-  autonomía. El decorador y el wrapper se construyen en la celda, usando el contrato
-  anterior. Señalar nombre, argumentos, ejecución Python y observación enlazada.
-- **Pausa.**
-- **Taller del DJ:** buscar una canción de investigación con filtros, mostrar
-  MUS-02, probar tres entradas inválidas y justificar si hace falta un LLM.
-- **Cierre:** mostrar un contrato válido y otro inválido; explicar qué hace cada actor.
+## Clase 5 · Multiagente
 
-**Error útil:** la búsqueda mínima sin tildes. No arreglar todo de inmediato; pedir
-una hipótesis y una prueba. **Profundidad:** la herramienta gana capacidades porque
-su contrato se conserva, no porque se añadan acciones arbitrarias.
+**Anclas:** dividir solo si hay una razón; supervisor (vuelve al centro), agentes como
+herramientas (contexto limpio), handoff (no vuelve).
+**Momento live:** el supervisor decidiendo con salida estructurada sobre una lista cerrada.
+**Error útil:** bajar `max_delegaciones` y ver un informe incompleto pero honesto.
 
-## Clase 2 · RAG y primeros grafos
+## Clase 6 · Evaluación y control humano
 
-**Tres anclas:** evidencia, estado y transición.
-**Producto:** secuencia y routing construidos con los mismos nodos.
+**Anclas:** criterio verificable, límite de intentos en el estado, pausa y reanudación con el
+mismo `thread_id`, juez calibrado contra etiquetas humanas, costo medido.
+**Momento live:** el juez GPT-6 sobre los tres casos etiquetados; comparar con el juez de reglas.
+**Error útil:** una cita real con una afirmación falsa: pasa la validación de IDs y la detecta el juez.
 
-- **Recuperación y generación:** seguir una ficha de Batman hasta una cita y separar responsabilidades.
-- **Prompt y contrato de salida:** examinar prompt y schema. Crear una respuesta con ID inventado: Pydantic
-  acepta la forma, pero la validación de referencias la rechaza. La plantilla visible
-  se pasa a compose y controla el prompt en live. Offline comprueba el contrato de
-  plantilla, pero no genera con un modelo. Discutir fidelidad.
-- **Pausa.**
-- **Estado y secuencia:** representar el estado y construir buscar → responder. Explicar que TypedDict
-  anota tipos, no hace la validación de runtime de Pydantic. Cambiar una colección.
-- **Routing:** agregar condición y nodo de abstención. Dibujar las dos rutas.
-  Probar “Batman vacuna marciana”: colección conocida no significa tema respaldado.
-- **Pausa.**
-- **Taller de la vecindad:** consultas de la vecindad, caso vacío y streaming de updates. Diagnosticar
-  el filtro equivocado antes de proponer cambiar el modelo.
-- **Cierre:** justificar cuándo la secuencia es suficiente y cuándo conviene routing.
+## Clase 7 · Deep Agents
 
-**Error útil:** schema válido con contenido incorrecto. **Profundidad:** distinguir
-pruebas de recuperación, referencias y fidelidad. No enseñar álgebra de embeddings
-además de todo esto: aquí la búsqueda lexical ya ofrece evidencia inspeccionable.
-
-## Clase 3 · Arquitecturas y equipos
-
-**Tres anclas:** dividir trabajo, combinar estado y decidir quién controla.
-**Producto:** paralelo fijo, orquestador con Send, agente con límites (a mano y con
-`create_agent`) y supervisor con `Command` y límite de delegaciones.
-
-- **Elección de arquitectura:** elegir patrón según tres tareas y contrastar el mapa. Los ocho patrones no
-  son ocho implementaciones que deban dominar de memoria ese día.
-- **Paralelismo fijo:** construir dos workers, campos separados y barrera de unión. Comprobar dos
-  fuentes. No prometer velocidad por una demo local de microsegundos.
-- **Pausa.**
-- **Orquestador y workers:** convertir número fijo en plan variable. Mostrar por qué parts necesita un
-  reducer; concatenar no equivale a deduplicar. Validar el plan antes de repartir.
-- **Agente con herramientas:** seguir modelo → herramienta → modelo. Nombrar límites, observaciones y modo.
-  Cambiar `MAX_LLAMADAS` a 1. Luego la versión prearmada: `create_agent` con
-  `ModelCallLimitMiddleware` frente a un guion "atascado" que nunca deja de pedir herramientas.
-- **Pausa.**
-- **Taller del equipo:** agregar música al plan sin copiar nodos, duplicar una colección y rechazar
-  otra desconocida. La celda del reto parte de dos colecciones; la ampliación completa
-  aparece después, en la solución.
-- **Supervisor:** construir el grafo con `Command(goto=..., update=...)`. Contar en voz alta
-  cuántas veces vuelve el control al centro. Bajar `max_delegaciones` a 1 y leer la bitácora.
-  En live decide GPT-6 con salida estructurada; el límite lo sigue imponiendo el código.
-  Comparar con handoff, que queda en diseño.
-- **Cierre:** defender una arquitectura y un caso de error.
-
-**Error útil:** creer que dos funciones paralelas son dos agentes. **Profundidad:**
-pedir el requisito que justifica cada patrón. Si el grupo se atasca con la sintaxis
-Annotated, mostrar la concatenación concreta y continuar con el código preparado.
-No quitar pausas ni convertir la demo de agente en una nueva implementación larga.
-
-## Clase 4 · Evaluación y revisión humana
-
-**Tres anclas:** criterio, límite y responsabilidad.
-**Producto:** corrección con máximo de intentos, aprobación/rechazo y reporte.
-
-- **Criterio de evaluación:** mostrar una referencia inventada y definir qué puede detectar el evaluador.
-- **Ciclo de corrección:** construir los nodos y el ciclo. La primera falla es inyectada de forma
-  explícita; no se atribuye falsamente a una equivocación espontánea del modelo.
-  Cambiar MAX_INTENTOS de dos a uno permite observar agotamiento y escalación.
-- **Pausa.**
-- **Revisión humana:** checkpoint, interrupción y reanudación con el mismo thread_id. La aprobación
-  de la celda es una simulación; antes de ejecutarla una persona explica su revisión.
-- **Decisiones y aislamiento:** enviar una decisión inválida, corregirla con un rechazo y verificar aislamiento.
-  Una entrada inválida debe conservar la posibilidad de reanudar. Discutir reinicios.
-- **Pausa.**
-- **Taller de evaluación:** ejecutar cinco casos y comprobar igualdad de IDs, incluido caso vacío.
-  El reto trae cuatro casos; cada pareja agrega el musical antes de ver la solución
-  de cinco. Probar filtro incorrecto y falta de evidencia. Guardar el reporte local.
-- **Cierre:** defensa del proyecto; agregar dos casos más queda como trabajo posterior.
-
-**Error útil:** seguir corrigiendo sin evidencia o entregar el último borrador porque
-se agotó el límite. **Profundidad:** el criterio de IDs no prueba verdad semántica.
-Un reporte de pruebas tampoco sustituye autenticación o almacenamiento durable.
-
-## Clase 5 · Deep Agents
-
-**Tres anclas:** plan, delegación con contexto limpio y permiso antes de actuar.
-**Producto:** un equipo (coordinador + investigador + dj) que escribe `/actividad.md`
-después de una aprobación, un rechazo comprobado y una verificación de citas con código.
-
-- **Qué le falta a un agente simple:** perder el hilo, saturar contexto, hacer todo solo,
-  actuar sin preguntar. Relacionar cada ingrediente con una clase anterior.
-- **Leer antes de ejecutar:** el prompt del coordinador y las descripciones de los
-  especialistas. La descripción es lo que el coordinador usa para decidir a quién delegar.
-- **Ejecutar hasta la pausa:** mostrar plan (`todos`), que todavía no hay archivos y la
-  propuesta pendiente. Una persona lee, otra decide.
-- **Pausa.**
-- **Aprobar y leer la línea de tiempo:** señalar las dos llamadas `task` en el mismo paso
-  (delegación en paralelo) y que el coordinador no ve las búsquedas internas.
-- **Rechazar:** otro `thread_id`; comprobar que no hay archivos y que el agente lo informa.
-- **Verificar citas:** expresión regular + conjunto de IDs del catálogo.
-- **Pausa.**
-- **Taller:** cambiar tema/colección (predicción CHA-01 y MUS-01), escribir `validar_ids`
-  como herramienta y probar un especialista verificador aislado.
-- **Cierre:** tabla workflow / `create_agent` / deep agent. Pedir un caso donde un deep agent
-  sería exagerado.
-
-**Error útil:** aprobar porque "se ve bien". **Profundidad:** en live, mostrar una
-ejecución real con Sol coordinando y Luna en los especialistas, y diagnosticar con la línea
-de tiempo antes de proponer un modelo más grande. Offline, explicar con claridad que las
-decisiones son un guion y que todo lo demás (harness, subagentes, archivos, aprobación) es real.
-
-## Reenganche y ajuste del ritmo
-
-Si alguien pierde el hilo, preguntar qué fue lo último que funcionó y ubicar el
-punto de reenganche. Reejecutar una definición y un ejemplo corto. Usar una solución
-es válido si después puede explicar una diferencia. Mostrar el título actual en
-pantalla. No pedir releer todo el notebook mientras el resto avanza.
-
-Si varias personas no pueden explicar una salida, reducir una variante del taller
-y conservar el bloque de corrección. Dar un rol de revisor a quien terminó antes:
-debe proponer un caso de prueba, no introducir más frameworks al resto del grupo.
-
-El recorrido se ajusta con evidencia del aula. Registrar en una primera cohorte
-las dudas y los puntos donde se necesita más acompañamiento; ajustar ejemplos
-manteniendo objetivos, dos pausas y cierre.
+**Anclas:** plan, archivos virtuales, subagentes con contexto propio y límite propio, permiso
+antes de escribir o editar.
+**Momento live:** el equipo completo con Sol coordinando y Luna en especialistas, en streaming.
+Mostrar el costo al final y discutir cuándo un workflow habría bastado.
+**Error útil:** el especialista atascado que su propio límite detiene.
 
 ## Evaluación del proyecto
 
-| Dimensión | Puntos | Evidencia |
-|---|---:|---|
-| Contrato de herramienta | 25 | Entrada inválida rechazada, filtros, límite y IDs |
-| Arquitectura justificada | 30 | Grafo ejecutable, decisión comparada y prueba de una falla |
-| Evidencia y abstención | 20 | Fuentes recuperadas, referencias válidas y ausencia de evidencia |
-| Evaluación y responsabilidad | 25 | Reporte, ciclo acotado, aprobación y rechazo |
+Usar la rúbrica de `proyectos/asistente_archivo/README.md`. Aceptar explicación oral, escrita
+o con diagramas, junto con ejecuciones. Permitir corregir después del feedback. No premiar la
+cantidad de agentes ni la velocidad: premiar explicar, comprobar y reconocer un límite propio.
 
-El proyecto integrador de la clase 5 (equipo de deep agents con aprobación, rechazo y
-verificación de citas) puede reemplazar la evidencia de "Arquitectura justificada" si
-incluye la comparación con un workflow más simple.
+## Ajuste con evidencia del aula
 
-Aceptar explicación oral, escrita o diagramas, junto con ejecuciones. Permitir
-corregir después de feedback. No premiar cantidad de agentes ni exigir exposición
-de razonamiento privado de un modelo. El estudiante debe mostrar comportamiento
-observable y reconocer un límite de su propia solución.
+Registrar en la primera cohorte dónde se detienen las personas (celda y pregunta), cuánto
+tarda cada bloque y qué ejercicios se resuelven sin mirar la solución. Ajustar ejemplos y
+pistas manteniendo objetivos, pausas y cierre.

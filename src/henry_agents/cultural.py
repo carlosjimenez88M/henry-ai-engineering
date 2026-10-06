@@ -16,7 +16,8 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 from langgraph.types import Send, interrupt
-from pydantic import BaseModel, ConfigDict, Field
+from openai import BadRequestError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from henry_agents.config import chat_model, configure
 from henry_agents.retrieval import tokens
@@ -119,8 +120,9 @@ def buscar_archivo(
 
 
 class GroundedAnswer(BaseModel):
-    text: str = Field(min_length=1)
-    source_ids: list[str]
+    # Sin min_length: el modo estricto de salida estructurada de OpenAI no acepta esa regla.
+    text: str = Field(description="Respuesta breve en español")
+    source_ids: list[str] = Field(description="IDs citados, por ejemplo BAT-01, sin corchetes")
 
 
 def compose(result: SearchResult, mode=None, config=None, *, prompt=None):
@@ -156,9 +158,11 @@ def compose(result: SearchResult, mode=None, config=None, *, prompt=None):
             .with_structured_output(GroundedAnswer)
             .invoke(messages, config=config)
         )
-    except OutputParserException:
-        # El modelo devolvió algo que no respeta el esquema: abstenerse, no adivinar.
+    except (OutputParserException, ValidationError, BadRequestError):
+        # El modelo (o la API) no respetó el formato: abstenerse, no adivinar.
         return GroundedAnswer(text="La respuesta del modelo no respetó el formato.", source_ids=[])
+    # Tolerar "[BAT-01]" o " BAT-01 ": la cita es la misma aunque cambie la escritura.
+    response.source_ids = [i.strip("[] ") for i in response.source_ids]
     allowed = {h.id for h in result.hits}
     if not response.source_ids or not set(response.source_ids) <= allowed:
         return GroundedAnswer(text="La respuesta no pasó la validación de fuentes.", source_ids=[])
@@ -227,7 +231,7 @@ def build_tool_agent(mode=None, max_calls=3, model=None):
         elif isinstance(messages[-1], ToolMessage):
             if messages[-1].status == "error":
                 reply = AIMessage(
-                    content="La herramienta rechazó la entrada. Revisá sus argumentos."
+                    content="La herramienta rechazó la entrada. Revisa sus argumentos."
                 )
             else:
                 evidence = SearchResult.model_validate_json(messages[-1].content)

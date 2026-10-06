@@ -301,3 +301,26 @@ def test_cost_helpers(capsys):
 def test_scripted_call_helper():
     mensaje = llamar("buscar_archivo", {"query": "equipo"}, "x")
     assert mensaje.tool_calls[0]["name"] == "buscar_archivo"
+
+
+def test_revisar_compares_without_revealing(capsys):
+    from henry_agents.practica import revisar
+
+    assert not revisar("00_workflow_o_agente", {1: "workflow", 2: "workflow"})
+    salida = capsys.readouterr().out
+    assert "Repiensa" in salida and "agente" not in salida
+    assert revisar("00_workflow_o_agente", {1: "workflow", 2: "agente", 3: "workflow", 4: "agente", 5: "workflow"})
+
+
+def test_grounded_answer_schema_is_strict_mode_friendly():
+    from henry_agents.cultural import GroundedAnswer
+
+    esquema = GroundedAnswer.model_json_schema()
+    assert "minLength" not in str(esquema)
+
+
+def test_deep_team_also_pauses_before_delete():
+    borrador = ModeloGuionado(pasos=[llamar("delete", {"file_path": "/actividad.md"}, "d1")])
+    modelos = {"coordinador": borrador, "investigador": ModeloReglas(), "dj": ModeloReglas(), "general-purpose": ModeloReglas()}
+    estado = crear_equipo_profundo(models=modelos).invoke({"messages": [HumanMessage("borra")]}, hilo())
+    assert [a["name"] for a in solicitudes_pendientes(estado)] == ["delete"]

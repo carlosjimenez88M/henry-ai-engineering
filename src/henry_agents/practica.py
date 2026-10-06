@@ -43,3 +43,26 @@ def ver_solucion(clave):
         return
     print(f"# Solución: {clave}\n")
     print(archivo.read_text(encoding="utf-8"))
+
+
+def revisar(clave, respuesta):
+    """Compara tu respuesta con la clave de soluciones/claves/<clave>.json, sin mostrarla.
+
+    Para diccionarios dice qué ítems repensar; para listas o valores, si coincide o no.
+    """
+    import json
+
+    esperada = json.loads((SOLUCIONES / "claves" / f"{clave}.json").read_text(encoding="utf-8"))
+    if isinstance(esperada, dict):
+        respuesta = {str(k): v for k, v in (respuesta or {}).items()}
+        pendientes = [k for k, v in esperada.items() if respuesta.get(k) != v]
+        if not pendientes:
+            print(f"✅ Las {len(esperada)} respuestas coinciden. Lee la solución para comparar razones.")
+            return True
+        print(f"🔁 Repiensa: {', '.join(pendientes)} ({len(esperada) - len(pendientes)} de {len(esperada)} bien).")
+        return False
+    if respuesta == esperada:
+        print("✅ Coincide con la clave.")
+        return True
+    print("🔁 Todavía no coincide. Relee la consigna y vuelve a intentar.")
+    return False
