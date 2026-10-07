@@ -89,4 +89,4 @@ No se agregó a Henry una licencia que otorgue derechos sobre el material de ori
   con `langchain-openai` instalado y se probó con un doble sin red.
 
 Consultadas el 6 de octubre de 2026. La ejecución live, otras plataformas y la
-calidad pedagógica en una cohorte requieren evidencia propia; ver `VALIDACION.md`.
+calidad pedagógica en una cohorte requieren evidencia propia.

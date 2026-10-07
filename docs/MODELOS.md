@@ -56,5 +56,5 @@ uv run python scripts/evaluate_rag.py --mode live --case RAG-06
 
 Consulta el reporte, la traza, los tokens y las citas. No sustituyas un error de API
 por una simulación silenciosa. El catálogo oficial y los precios pueden cambiar:
-vuelve a verificarlos al comenzar una cohorte. Revisa
-[VALIDACION.md](../VALIDACION.md) para separar lo ejecutado de lo pendiente.
+vuelve a verificarlos al comenzar una cohorte. Separa lo ejecutado de lo pendiente
+con el reporte de `scripts/verify.py`.
