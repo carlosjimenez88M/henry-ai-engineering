@@ -1,5 +1,11 @@
 # Henry · AI Engineering desde cero
 
+Para una primera sesión de programación, abre
+[Python para AI Engineering](clases/python_ai/README.md).
+Comienza con fundamentos y continúa con archivos/JSON, contratos, embeddings,
+modelos de IA y FastAPI, usando escenas originales de cómics y ejercicios con feedback. Consulta su
+[recorrido y preparación](clases/python_ai/README.md).
+
 Empieza por **[Workflows de IA desde cero](clases/agentic_workflows/README.md)**:
 diez clases en español con una tienda de barrio ficticia, Python básico, ejemplos
 visibles, talleres, soluciones y dos proyectos. Esta ruta introduce los conceptos
@@ -105,7 +111,7 @@ uv run python scripts/doctor.py           # Diagnóstico del entorno (también r
 uv run python scripts/doctor.py --live    # + una llamada mínima a OpenAI
 uv run pytest -q                          # Contratos, grafos, agentes, límites y aprobaciones
 uv run ruff check src scripts tests clases proyectos soluciones
-uv run python scripts/verify.py --mode offline   # 18 scripts y 18 notebooks, kernels nuevos
+uv run python scripts/verify.py --mode offline   # Todos los scripts y notebooks, kernels nuevos
 uv run python scripts/verify.py --mode offline --track workflows  # Las 10 clases iniciales
 uv run python scripts/verify.py --mode offline --track advanced   # Solo las 8 de la ruta avanzada
 uv run python scripts/evaluate_workflows.py      # 10 casos del proyecto inicial
@@ -119,14 +125,15 @@ uv run python scripts/sync_notebooks.py --desde-notebooks  # traer ediciones del
 Con `make` disponible (Mac/Linux): `make setup`, `make doctor`, `make test`, `make verify`, etc.
 
 Los `.py` en formato Jupytext percent son la fuente editable. Los notebooks se guardan sin
-outputs. Los ejecutados, logs y reportes quedan en `reports/`, fuera de Git. Cada
+outputs, salvo los de `clases/python_ai/`, que se guardan ejecutados offline
+(`make notebooks-python`). Los logs y reportes quedan en `reports/`, fuera de Git. Cada
 verificación registra fecha, versiones, huellas SHA-256 y estado de cada recorrido.
-[Informe de validación](VALIDACION.md).
 Los experimentos opcionales de las clases iniciales vienen apagados: la verificación
 no activa sus banderas automáticamente.
 
 ## Organización
 
+- `clases/python_ai/`: cinco notebooks, desde Python básico hasta embeddings, modelos y FastAPI.
 - `clases/agentic_workflows/`: diez pares notebook/script para empezar y su índice.
 - `clases/0*.py` y `.ipynb`: ocho pares de la ruta avanzada; `soluciones/`: sus soluciones.
 - `proyectos/tienda_workflows/`: consigna, plantilla y solución del integrador inicial.

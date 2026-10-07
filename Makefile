@@ -1,4 +1,4 @@
-.PHONY: desde-notebooks setup install doctor doctor-live test lint notebooks verify verify-live lab api eval verify-workflows eval-workflows eval-rag
+.PHONY: notebooks-python desde-notebooks setup install doctor doctor-live test lint notebooks verify verify-live lab api eval verify-workflows eval-workflows eval-rag
 # En Windows sin make, usar los comandos de cada regla directamente (ver docs/INSTALACION.md).
 setup:
 	uv sync --locked
@@ -21,6 +21,9 @@ lint:
 
 notebooks:
 	uv run python scripts/sync_notebooks.py
+
+notebooks-python:
+	uv run python scripts/sync_notebooks.py --solo python_ai --ejecutar
 
 verify:
 	uv run python scripts/verify.py --mode offline

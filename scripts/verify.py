@@ -52,6 +52,8 @@ def validate_pairs(root, track="all"):
     directory = root / "clases"
     if track == "workflows":
         directory /= "agentic_workflows"
+    elif track == "python":
+        directory /= "python_ai"
     sources = sorted(directory.glob("0*.py") if track == "advanced" else directory.rglob("0*.py"))
     if not sources:
         raise ValueError("No se encontraron scripts de clase en clases/")
@@ -75,7 +77,8 @@ def artifact_path(source, root, output, suffix):
 
 def execute_script(source, root, output, mode):
     # Dibujos de grafos en texto: la verificación no depende de servicios web.
-    env = {**os.environ, "COURSE_MODE": mode, "HENRY_GRAPH_PNG": "0"}
+    # Agg: los gráficos de matplotlib no abren ventanas que bloqueen el script.
+    env = {**os.environ, "COURSE_MODE": mode, "HENRY_GRAPH_PNG": "0", "MPLBACKEND": "Agg"}
     with artifact_path(source, root, output, ".log").open("w", encoding="utf-8") as log:
         subprocess.run(
             [sys.executable, str(source)],
@@ -132,8 +135,10 @@ def run_verification(root, mode, track="all"):
     root = Path(root).resolve()
     if mode not in {"offline", "live"}:
         raise ValueError("Modo inválido")
-    if track not in {"all", "workflows", "advanced"}:
+    if track not in {"all", "workflows", "advanced", "python"}:
         raise ValueError("Recorrido inválido")
+    if track == "python" and mode != "offline":
+        raise ValueError("El taller Python se verifica offline; activa el laboratorio real en el notebook 03")
     output = root / "reports" / mode
     if track != "all":
         output /= track
@@ -203,7 +208,7 @@ def run_verification(root, mode, track="all"):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=["offline", "live"], default="offline")
-    parser.add_argument("--track", choices=["all", "workflows", "advanced"], default="all")
+    parser.add_argument("--track", choices=["all", "workflows", "advanced", "python"], default="all")
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     return 0 if run_verification(root, args.mode, args.track)["status"] == "passed" else 1

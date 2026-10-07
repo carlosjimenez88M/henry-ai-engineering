@@ -1,0 +1,44 @@
+[
+  {
+    "id": "COM-BAT-01",
+    "heroe": "batman",
+    "titulo": "Batman: investigación de aula",
+    "texto": "En esta ficción de aula, Batman investiga con observación, preguntas y pruebas. No usa poderes sobrenaturales ni presenta una sospecha como certeza.",
+    "tipo": "restriccion de personaje"
+  },
+  {
+    "id": "COM-BAT-02",
+    "heroe": "batman",
+    "titulo": "Batman: colaboración de aula",
+    "texto": "En Ciudad Prisma, Batman comparte pistas con sus aliados y protege a quienes están en peligro. La historia debe mostrar cómo una pista cambia su siguiente decisión.",
+    "tipo": "regla narrativa ficticia"
+  },
+  {
+    "id": "COM-SPI-01",
+    "heroe": "spiderman",
+    "titulo": "Spider-Man: responsabilidad de aula",
+    "texto": "En esta ficción de aula, Spider-Man ayuda a su comunidad y asume las consecuencias de sus decisiones. La solución no debe depender de abandonar a alguien en peligro.",
+    "tipo": "restriccion de personaje"
+  },
+  {
+    "id": "COM-SPI-02",
+    "heroe": "spiderman",
+    "titulo": "Spider-Man: observación de aula",
+    "texto": "En Ciudad Prisma, Spider-Man identifica un problema cotidiano y escucha a una persona afectada antes de actuar. Puede usar humor sin burlarse de esa persona.",
+    "tipo": "regla narrativa ficticia"
+  },
+  {
+    "id": "COM-FAN-01",
+    "heroe": "fantasticos",
+    "titulo": "Los Cuatro Fantásticos: equipo de aula",
+    "texto": "En esta ficción de aula, los Cuatro Fantásticos resuelven problemas mediante trabajo en equipo. Cada integrante aporta una observación y el equipo contrasta sus hipótesis.",
+    "tipo": "restriccion de personaje"
+  },
+  {
+    "id": "COM-FAN-02",
+    "heroe": "fantasticos",
+    "titulo": "Los Cuatro Fantásticos: ciencia de aula",
+    "texto": "En Ciudad Prisma, los Cuatro Fantásticos prueban una solución a pequeña escala antes de extenderla. Un experimento fallido debe cambiar el plan, sin afirmar que la tecnología ficticia existe.",
+    "tipo": "regla narrativa ficticia"
+  }
+]
