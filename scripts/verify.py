@@ -54,6 +54,8 @@ def validate_pairs(root, track="all"):
         directory /= "agentic_workflows"
     elif track == "python":
         directory /= "python_ai"
+    elif track == "rag-intro":
+        directory /= "rag_embeddings"
     sources = sorted(directory.glob("0*.py") if track == "advanced" else directory.rglob("0*.py"))
     if not sources:
         raise ValueError("No se encontraron scripts de clase en clases/")
@@ -135,10 +137,12 @@ def run_verification(root, mode, track="all"):
     root = Path(root).resolve()
     if mode not in {"offline", "live"}:
         raise ValueError("Modo inválido")
-    if track not in {"all", "workflows", "advanced", "python"}:
+    if track not in {"all", "workflows", "advanced", "python", "rag-intro"}:
         raise ValueError("Recorrido inválido")
     if track == "python" and mode != "offline":
         raise ValueError("El taller Python se verifica offline; activa el laboratorio real en el notebook 03")
+    if track == "rag-intro" and mode != "offline":
+        raise ValueError("La clase RAG se verifica offline; activa su laboratorio live explícitamente")
     output = root / "reports" / mode
     if track != "all":
         output /= track
@@ -163,7 +167,8 @@ def run_verification(root, mode, track="all"):
     try:
         report["versions"] = {
             p: importlib.metadata.version(p)
-            for p in ["langgraph", "langchain-core", "langchain-openai", "deepagents", "nbclient"]
+            for p in ["langgraph", "langchain-core", "langchain-openai", "deepagents", "nbclient",
+                      "qdrant-client", "openai", "numpy", "matplotlib"]
         }
         report["input_sha256"] = fingerprints(root)
         sources = validate_pairs(root, track)
@@ -208,7 +213,7 @@ def run_verification(root, mode, track="all"):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=["offline", "live"], default="offline")
-    parser.add_argument("--track", choices=["all", "workflows", "advanced", "python"], default="all")
+    parser.add_argument("--track", choices=["all", "workflows", "advanced", "python", "rag-intro"], default="all")
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     return 0 if run_verification(root, args.mode, args.track)["status"] == "passed" else 1

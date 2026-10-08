@@ -1,0 +1,51 @@
+[
+  {
+    "id": "CC-01",
+    "titulo": "Préstamo de libros",
+    "categoria": "biblioteca",
+    "vigente": true,
+    "texto": "La biblioteca del Centro Cultural del Barrio permite llevar hasta dos libros a casa. El plazo vigente de préstamo es de siete días calendario.\n\nPara retirar un libro se necesita una credencial gratuita del centro y un documento de identidad. La credencial se solicita en recepción y no tiene costo."
+  },
+  {
+    "id": "CC-02",
+    "titulo": "Devoluciones y renovaciones",
+    "categoria": "biblioteca",
+    "vigente": true,
+    "texto": "Los libros se devuelven en el mostrador de la biblioteca. Si el centro está cerrado, pueden dejarse en el buzón de devoluciones junto a la entrada.\n\nUn préstamo puede renovarse una vez por otros siete días si nadie ha reservado el libro. La renovación se solicita antes del vencimiento, de manera presencial."
+  },
+  {
+    "id": "CC-03",
+    "titulo": "Computadoras comunitarias",
+    "categoria": "tecnologia",
+    "vigente": true,
+    "texto": "La sala de computadoras ofrece sesiones gratuitas de cuarenta y cinco minutos para estudiar, buscar empleo o preparar tareas. Para reservar una sesión se necesita la credencial del centro.\n\nLas computadoras tienen acceso a internet y un editor de documentos. No se permite instalar programas ni guardar contraseñas en los equipos compartidos."
+  },
+  {
+    "id": "CC-04",
+    "titulo": "Taller de dibujo de cómics",
+    "categoria": "talleres",
+    "vigente": true,
+    "texto": "El taller de dibujo de cómics enseña a crear personajes, viñetas y diálogos. Está dirigido a personas desde los doce años y no exige experiencia previa.\n\nLa inscripción al taller se realiza en recepción. El centro presta lápices y papel durante la actividad; cada participante puede traer su propio cuaderno."
+  },
+  {
+    "id": "CC-05",
+    "titulo": "Feria de cómics del barrio",
+    "categoria": "eventos",
+    "vigente": true,
+    "texto": "La feria de cómics del barrio recibe proyectos originales de estudiantes y vecinos. El código de inscripción de la feria es COMIC-27-BARRIO.\n\nCada proyecto de la feria puede presentar hasta ocho páginas. La participación y la entrada del público son gratuitas; no se venden entradas anticipadas."
+  },
+  {
+    "id": "CC-06",
+    "titulo": "Donaciones para la biblioteca",
+    "categoria": "biblioteca",
+    "vigente": true,
+    "texto": "La biblioteca acepta donaciones de libros y cómics completos, limpios y en buen estado. No recibe material con páginas faltantes o con humedad.\n\nLas donaciones se entregan en recepción. El personal revisa el estado del material antes de incorporarlo al catálogo comunitario."
+  },
+  {
+    "id": "CC-07",
+    "titulo": "Norma de préstamo archivada",
+    "categoria": "biblioteca",
+    "vigente": false,
+    "texto": "Esta norma de préstamo está archivada y ya no está vigente. En la versión anterior, el plazo para llevar libros a casa era de treinta días calendario.\n\nEl plazo archivado de treinta días fue reemplazado por la norma vigente de siete días. Este documento se conserva únicamente como registro histórico."
+  }
+]

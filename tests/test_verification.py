@@ -123,3 +123,20 @@ def test_nested_stale_notebook_is_not_skipped(verifier, sample_repo):
     nested.write_text('# %%\nprint("new")\n')
     with pytest.raises(ValueError, match="desactualizado"):
         verifier.validate_pairs(sample_repo)
+
+
+def test_rag_intro_track_isolated_from_other_stale_notebooks(verifier, sample_repo, monkeypatch):
+    source = sample_repo / "clases/rag_embeddings/00_rag_demo.py"
+    source.parent.mkdir()
+    source.write_text('# %%\nprint("rag")\n')
+    nbformat.write(jupytext.read(source), source.with_suffix(".ipynb"))
+    (sample_repo / "clases/01_demo.py").write_text('# %%\nprint("stale")\n')
+    called = []
+    monkeypatch.setattr(verifier, "execute_script", lambda s, *args: called.append(s))
+    monkeypatch.setattr(verifier, "execute_notebook", lambda s, *args: called.append(s))
+    report = verifier.run_verification(sample_repo, "offline", "rag-intro")
+    assert report["status"] == "passed"
+    assert called == [source, source]
+    assert (sample_repo / "reports/offline/rag-intro/verification.json").is_file()
+    with pytest.raises(ValueError, match="explícitamente"):
+        verifier.run_verification(sample_repo, "live", "rag-intro")

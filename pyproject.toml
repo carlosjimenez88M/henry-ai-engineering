@@ -16,6 +16,7 @@ dependencies = [
   "nbformat>=5.10,<6",
   "nbclient>=0.10,<1",
   "ipykernel>=6.29,<8",
+  "ipywidgets>=8.1,<9",
   "jupyterlab>=4,<5",
   "jupytext>=1.17,<2",
   "pandas>=3.0.6",
@@ -24,6 +25,7 @@ dependencies = [
   "deepagents>=0.7,<0.8",
   "grandalf>=0.8,<1",
   "matplotlib>=3.9,<4",
+  "qdrant-client>=1.19,<2",
 ]
 [dependency-groups]
 dev = ["pytest>=8,<10", "httpx>=0.28,<1", "ruff>=0.11,<1"]

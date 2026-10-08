@@ -6,6 +6,11 @@ Comienza con fundamentos y continúa con archivos/JSON, contratos, embeddings,
 modelos de IA y FastAPI, usando escenas originales de cómics y ejercicios con feedback. Consulta su
 [recorrido y preparación](clases/python_ai/README.md).
 
+Para comprender cómo buscar información y responder con fuentes, abre
+[RAG y embeddings desde cero](clases/rag_embeddings/README.md): una clase visual
+de dos horas con cuatro ejercicios, comparación de embeddings reales y un proyecto
+completo en Qdrant. Puedes repetirla sin clave y activar una consulta nueva con `.env`.
+
 Empieza por **[Workflows de IA desde cero](clases/agentic_workflows/README.md)**:
 diez clases en español con una tienda de barrio ficticia, Python básico, ejemplos
 visibles, talleres, soluciones y dos proyectos. Esta ruta introduce los conceptos
@@ -114,6 +119,7 @@ uv run ruff check src scripts tests clases proyectos soluciones
 uv run python scripts/verify.py --mode offline   # Todos los scripts y notebooks, kernels nuevos
 uv run python scripts/verify.py --mode offline --track workflows  # Las 10 clases iniciales
 uv run python scripts/verify.py --mode offline --track advanced   # Solo las 8 de la ruta avanzada
+uv run python scripts/verify.py --mode offline --track rag-intro  # Clase visual RAG y embeddings
 uv run python scripts/evaluate_workflows.py      # 10 casos del proyecto inicial
 uv run python scripts/evaluate_rag.py --mode offline  # 12 casos: RAG y Agentic RAG
 uv run python scripts/verify.py --mode live --track advanced  # OpenAI; consume API
@@ -134,6 +140,7 @@ no activa sus banderas automáticamente.
 ## Organización
 
 - `clases/python_ai/`: cinco notebooks, desde Python básico hasta embeddings, modelos y FastAPI.
+- `clases/rag_embeddings/`: clase visual de introducción a RAG, guía docente, figuras y evaluación.
 - `clases/agentic_workflows/`: diez pares notebook/script para empezar y su índice.
 - `clases/0*.py` y `.ipynb`: ocho pares de la ruta avanzada; `soluciones/`: sus soluciones.
 - `proyectos/tienda_workflows/`: consigna, plantilla y solución del integrador inicial.

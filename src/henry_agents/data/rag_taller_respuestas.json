@@ -1,0 +1,297 @@
+{
+  "version": 1,
+  "origen": "openai_chat_api",
+  "generado_utc": "2026-10-08T22:11:25.428331+00:00",
+  "corpus_sha256": "b7addc0440e598cf523726f890718f5587c3f501ad9d3412d6ef648d0aa9a868",
+  "embedding_modelo": "text-embedding-3-large",
+  "k": 4,
+  "vigentes": true,
+  "entradas": {
+    "c079382a65928508de098ae96f78156dc086aaa8ef427992c88775e01a076e72": {
+      "pregunta": "¿Puedo llevarme un libro a casa?",
+      "contexto": [
+        {
+          "id": "CC-01-P1",
+          "titulo": "Préstamo de libros",
+          "categoria": "biblioteca",
+          "vigente": true,
+          "texto": "La biblioteca del Centro Cultural del Barrio permite llevar hasta dos libros a casa. El plazo vigente de préstamo es de siete días calendario.",
+          "score": 0.6023106423980915
+        },
+        {
+          "id": "CC-01-P2",
+          "titulo": "Préstamo de libros",
+          "categoria": "biblioteca",
+          "vigente": true,
+          "texto": "Para retirar un libro se necesita una credencial gratuita del centro y un documento de identidad. La credencial se solicita en recepción y no tiene costo.",
+          "score": 0.5260590884179175
+        },
+        {
+          "id": "CC-02-P1",
+          "titulo": "Devoluciones y renovaciones",
+          "categoria": "biblioteca",
+          "vigente": true,
+          "texto": "Los libros se devuelven en el mostrador de la biblioteca. Si el centro está cerrado, pueden dejarse en el buzón de devoluciones junto a la entrada.",
+          "score": 0.4982832387239789
+        },
+        {
+          "id": "CC-02-P2",
+          "titulo": "Devoluciones y renovaciones",
+          "categoria": "biblioteca",
+          "vigente": true,
+          "texto": "Un préstamo puede renovarse una vez por otros siete días si nadie ha reservado el libro. La renovación se solicita antes del vencimiento, de manera presencial.",
+          "score": 0.48233388483026207
+        }
+      ],
+      "resultado": {
+        "estado": "respondido",
+        "respuesta": "Sí. Puedes llevarte hasta dos libros a casa durante siete días calendario. Para retirar uno necesitas una credencial gratuita del centro y un documento de identidad.",
+        "citas": [
+          {
+            "fragmento_id": "CC-01-P1",
+            "cita_literal": "La biblioteca del Centro Cultural del Barrio permite llevar hasta dos libros a casa. El plazo vigente de préstamo es de siete días calendario."
+          },
+          {
+            "fragmento_id": "CC-01-P2",
+            "cita_literal": "Para retirar un libro se necesita una credencial gratuita del centro y un documento de identidad."
+          }
+        ],
+        "origen": "modelo",
+        "modelo_usado": "gpt-6-luna",
+        "uso_tokens": {
+          "input_tokens": 667,
+          "output_tokens": 151,
+          "total_tokens": 818
+        },
+        "llamadas_modelo": 1
+      }
+    },
+    "460783d2c245d877e379854115943f79d9d64676cac5c1646ddefe17c256f90f": {
+      "pregunta": "¿Cuál es el plazo de préstamo de libros?",
+      "contexto": [
+        {
+          "id": "CC-02-P2",
+          "titulo": "Devoluciones y renovaciones",
+          "categoria": "biblioteca",
+          "vigente": true,
+          "texto": "Un préstamo puede renovarse una vez por otros siete días si nadie ha reservado el libro. La renovación se solicita antes del vencimiento, de manera presencial.",
+          "score": 0.6697625217490459
+        },
+        {
+          "id": "CC-01-P1",
+          "titulo": "Préstamo de libros",
+          "categoria": "biblioteca",
+          "vigente": true,
+          "texto": "La biblioteca del Centro Cultural del Barrio permite llevar hasta dos libros a casa. El plazo vigente de préstamo es de siete días calendario.",
+          "score": 0.6697434629089423
+        },
+        {
+          "id": "CC-02-P1",
+          "titulo": "Devoluciones y renovaciones",
+          "categoria": "biblioteca",
+          "vigente": true,
+          "texto": "Los libros se devuelven en el mostrador de la biblioteca. Si el centro está cerrado, pueden dejarse en el buzón de devoluciones junto a la entrada.",
+          "score": 0.5111139912572922
+        },
+        {
+          "id": "CC-01-P2",
+          "titulo": "Préstamo de libros",
+          "categoria": "biblioteca",
+          "vigente": true,
+          "texto": "Para retirar un libro se necesita una credencial gratuita del centro y un documento de identidad. La credencial se solicita en recepción y no tiene costo.",
+          "score": 0.4928449585414724
+        }
+      ],
+      "resultado": {
+        "estado": "respondido",
+        "respuesta": "El plazo de préstamo es de siete días calendario. Puede renovarse una vez por otros siete días si nadie ha reservado el libro.",
+        "citas": [
+          {
+            "fragmento_id": "CC-01-P1",
+            "cita_literal": "El plazo vigente de préstamo es de siete días calendario."
+          },
+          {
+            "fragmento_id": "CC-02-P2",
+            "cita_literal": "Un préstamo puede renovarse una vez por otros siete días si nadie ha reservado el libro."
+          }
+        ],
+        "origen": "modelo",
+        "modelo_usado": "gpt-6-luna",
+        "uso_tokens": {
+          "input_tokens": 667,
+          "output_tokens": 131,
+          "total_tokens": 798
+        },
+        "llamadas_modelo": 1
+      }
+    },
+    "03c4b1b789ddc86b6fc9e45659828ac6f42cd29ae797d6c2f1c0a1bacd8a2a98": {
+      "pregunta": "¿Cuál es el código de inscripción de la feria de cómics?",
+      "contexto": [
+        {
+          "id": "CC-05-P1",
+          "titulo": "Feria de cómics del barrio",
+          "categoria": "eventos",
+          "vigente": true,
+          "texto": "La feria de cómics del barrio recibe proyectos originales de estudiantes y vecinos. El código de inscripción de la feria es COMIC-27-BARRIO.",
+          "score": 0.7241462863163133
+        },
+        {
+          "id": "CC-05-P2",
+          "titulo": "Feria de cómics del barrio",
+          "categoria": "eventos",
+          "vigente": true,
+          "texto": "Cada proyecto de la feria puede presentar hasta ocho páginas. La participación y la entrada del público son gratuitas; no se venden entradas anticipadas.",
+          "score": 0.4334223487455301
+        },
+        {
+          "id": "CC-04-P1",
+          "titulo": "Taller de dibujo de cómics",
+          "categoria": "talleres",
+          "vigente": true,
+          "texto": "El taller de dibujo de cómics enseña a crear personajes, viñetas y diálogos. Está dirigido a personas desde los doce años y no exige experiencia previa.",
+          "score": 0.4175909719575355
+        },
+        {
+          "id": "CC-04-P2",
+          "titulo": "Taller de dibujo de cómics",
+          "categoria": "talleres",
+          "vigente": true,
+          "texto": "La inscripción al taller se realiza en recepción. El centro presta lápices y papel durante la actividad; cada participante puede traer su propio cuaderno.",
+          "score": 0.38187854819081496
+        }
+      ],
+      "resultado": {
+        "estado": "respondido",
+        "respuesta": "El código de inscripción de la feria de cómics es COMIC-27-BARRIO.",
+        "citas": [
+          {
+            "fragmento_id": "CC-05-P1",
+            "cita_literal": "El código de inscripción de la feria es COMIC-27-BARRIO."
+          }
+        ],
+        "origen": "modelo",
+        "modelo_usado": "gpt-6-luna",
+        "uso_tokens": {
+          "input_tokens": 686,
+          "output_tokens": 97,
+          "total_tokens": 783
+        },
+        "llamadas_modelo": 1
+      }
+    },
+    "b329856d19d2a48a185b6e122063747d1fadf83b3222a0db1ca685552754a007": {
+      "pregunta": "¿Qué necesito para llevar un libro y cuándo debo devolverlo?",
+      "contexto": [
+        {
+          "id": "CC-02-P1",
+          "titulo": "Devoluciones y renovaciones",
+          "categoria": "biblioteca",
+          "vigente": true,
+          "texto": "Los libros se devuelven en el mostrador de la biblioteca. Si el centro está cerrado, pueden dejarse en el buzón de devoluciones junto a la entrada.",
+          "score": 0.5838044054213702
+        },
+        {
+          "id": "CC-01-P2",
+          "titulo": "Préstamo de libros",
+          "categoria": "biblioteca",
+          "vigente": true,
+          "texto": "Para retirar un libro se necesita una credencial gratuita del centro y un documento de identidad. La credencial se solicita en recepción y no tiene costo.",
+          "score": 0.5782281087529586
+        },
+        {
+          "id": "CC-01-P1",
+          "titulo": "Préstamo de libros",
+          "categoria": "biblioteca",
+          "vigente": true,
+          "texto": "La biblioteca del Centro Cultural del Barrio permite llevar hasta dos libros a casa. El plazo vigente de préstamo es de siete días calendario.",
+          "score": 0.5672010149295839
+        },
+        {
+          "id": "CC-02-P2",
+          "titulo": "Devoluciones y renovaciones",
+          "categoria": "biblioteca",
+          "vigente": true,
+          "texto": "Un préstamo puede renovarse una vez por otros siete días si nadie ha reservado el libro. La renovación se solicita antes del vencimiento, de manera presencial.",
+          "score": 0.5230388357870184
+        }
+      ],
+      "resultado": {
+        "estado": "respondido",
+        "respuesta": "Para retirar un libro necesitas una credencial gratuita del centro y un documento de identidad. La credencial se solicita en recepción. Puedes llevar hasta dos libros y el plazo de préstamo es de siete días calendario; si nadie ha reservado el libro, puedes renovarlo una vez por otros siete días, solicitándolo presencialmente antes del vencimiento.",
+        "citas": [
+          {
+            "fragmento_id": "CC-01-P2",
+            "cita_literal": "Para retirar un libro se necesita una credencial gratuita del centro y un documento de identidad. La credencial se solicita en recepción y no tiene costo."
+          },
+          {
+            "fragmento_id": "CC-01-P1",
+            "cita_literal": "La biblioteca del Centro Cultural del Barrio permite llevar hasta dos libros a casa. El plazo vigente de préstamo es de siete días calendario."
+          },
+          {
+            "fragmento_id": "CC-02-P2",
+            "cita_literal": "Un préstamo puede renovarse una vez por otros siete días si nadie ha reservado el libro. La renovación se solicita antes del vencimiento, de manera presencial."
+          }
+        ],
+        "origen": "modelo",
+        "modelo_usado": "gpt-6-luna",
+        "uso_tokens": {
+          "input_tokens": 670,
+          "output_tokens": 245,
+          "total_tokens": 915
+        },
+        "llamadas_modelo": 1
+      }
+    },
+    "8f5337c0433c652d8a44f94b5b08b435998458d47dd58ec71bb34af05410ce6a": {
+      "pregunta": "¿Cuál es la capital de Mongolia?",
+      "contexto": [
+        {
+          "id": "CC-02-P1",
+          "titulo": "Devoluciones y renovaciones",
+          "categoria": "biblioteca",
+          "vigente": true,
+          "texto": "Los libros se devuelven en el mostrador de la biblioteca. Si el centro está cerrado, pueden dejarse en el buzón de devoluciones junto a la entrada.",
+          "score": 0.1341705460136463
+        },
+        {
+          "id": "CC-01-P1",
+          "titulo": "Préstamo de libros",
+          "categoria": "biblioteca",
+          "vigente": true,
+          "texto": "La biblioteca del Centro Cultural del Barrio permite llevar hasta dos libros a casa. El plazo vigente de préstamo es de siete días calendario.",
+          "score": 0.13303252173945476
+        },
+        {
+          "id": "CC-02-P2",
+          "titulo": "Devoluciones y renovaciones",
+          "categoria": "biblioteca",
+          "vigente": true,
+          "texto": "Un préstamo puede renovarse una vez por otros siete días si nadie ha reservado el libro. La renovación se solicita antes del vencimiento, de manera presencial.",
+          "score": 0.12650050093143272
+        },
+        {
+          "id": "CC-05-P2",
+          "titulo": "Feria de cómics del barrio",
+          "categoria": "eventos",
+          "vigente": true,
+          "texto": "Cada proyecto de la feria puede presentar hasta ocho páginas. La participación y la entrada del público son gratuitas; no se venden entradas anticipadas.",
+          "score": 0.1212758674424062
+        }
+      ],
+      "resultado": {
+        "estado": "sin_evidencia",
+        "respuesta": "Los fragmentos de contexto no contienen información sobre la capital de Mongolia.",
+        "citas": [],
+        "origen": "modelo",
+        "modelo_usado": "gpt-6-luna",
+        "uso_tokens": {
+          "input_tokens": 666,
+          "output_tokens": 61,
+          "total_tokens": 727
+        },
+        "llamadas_modelo": 1
+      }
+    }
+  }
+}
