@@ -9,7 +9,10 @@ modelos de IA y FastAPI, usando escenas originales de cómics y ejercicios con f
 Para comprender cómo buscar información y responder con fuentes, abre
 [RAG y embeddings desde cero](clases/rag_embeddings/README.md): una clase visual
 de dos horas con cuatro ejercicios, comparación de embeddings reales y un proyecto
-completo en Qdrant. Puedes repetirla sin clave y activar una consulta nueva con `.env`.
+completo en Qdrant. Incluye un explorador interactivo y ampliaciones sobre cortes,
+búsqueda híbrida, evaluación y actualización de documentos. Puedes repetirla sin
+clave y activar una consulta nueva con `.env`. Abre el taller con
+`uv run python scripts/start_rag_class.py` desde la raíz.
 
 Empieza por **[Workflows de IA desde cero](clases/agentic_workflows/README.md)**:
 diez clases en español con una tienda de barrio ficticia, Python básico, ejemplos

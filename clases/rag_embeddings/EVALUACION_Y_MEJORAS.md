@@ -1,19 +1,68 @@
 # Evaluación y mejoras de la clase
 
 Revisión del 8 de octubre de 2026. La clase está preparada para principiantes en
-RAG y embeddings, con código guiado, un centro cultural ficticio y un plan de
-120 minutos. El notebook organiza sus contenidos por temas.
+RAG y embeddings, con código guiado y un centro cultural ficticio. El notebook
+organiza un recorrido principal y cuatro ampliaciones para otra práctica.
+
+## Ampliación visual y comprobación del entorno
+
+El caso principal sigue a Camila: necesita conocer los requisitos y el plazo para
+llevarse un libro de ilustración. La pregunta exige reunir dos párrafos distintos.
+Así se puede observar una recuperación incompleta y corregirla antes de responder.
+
+Se incorporaron siete figuras y un panel interactivo con preguntas preparadas,
+Small/Large, cantidad de resultados y filtro de vigencia. El panel ejecuta consultas
+reales en Qdrant con vectores guardados y distingue la recuperación actual de una
+respuesta histórica. Si el contexto cambia, no presenta esa respuesta como nueva.
+
+Las ampliaciones incluyen cortes por caracteres con solapamiento, fusión de
+rankings con RRF, precisión/recall al variar `k` y retiro de una norma mediante
+metadatos. Cada sección incluye una pregunta de interpretación o un reto.
+
+Una revisión independiente señaló tres ajustes que se aplicaron antes del cierre:
+
+| Observación | Corrección |
+|---|---|
+| Comparar la fusión con Small y un baseline con Large mezclaba condiciones | Literal, Small y Literal + Small se comparan por separado del experimento Large con distintos `k` |
+| Faltaba comprobar qué ocurre con los puntos al retirar un documento | Se muestran el conteo antes/después (14 puntos) y la caída de cobertura; cambiar vigencia no borra los vectores |
+| La ampliación podía confundirse con el recorrido principal | Las secciones 12–15 quedan identificadas como continuación para otra práctica |
+
+La revisión final aceptó la fuente, las instrucciones y los scripts de inicio. La
+inspección visual corrigió además una etiqueta cortada en la figura de fragmentación.
+
+Comprobaciones de la versión ampliada:
+
+- **190 pruebas aprobadas** del backend, replay, panel, experimentos y verificación.
+- Ejecución completa de script y notebook en un kernel nuevo; siete figuras PNG y
+  panel emitidos, con las cuatro soluciones de referencia aprobadas tras Run All.
+- JupyterLab probado en el navegador con el kernel del repositorio: Camila con
+  `k=1` recupera 0/2 fuentes esperadas y con `k=4`, 2/2; al quitar el filtro en la
+  pregunta del plazo aparece la norma archivada; la pregunta de Mongolia se abstiene.
+- `scripts/start_rag_class.py --check` registra el kernel y confirma el entorno.
+- El diagnóstico con `--live` aprobó **17 comprobaciones** con el `.env` existente:
+  una consulta Large de 14 tokens y una generación con `gpt-6-luna` de 782 tokens,
+  con cita válida de CC-04-P2. No se imprimieron credenciales.
+- Ruff aprobado. La suite completa dio **483 aprobadas y una falla previa** en la
+  sincronización de `clases/06_evaluacion_y_humano.ipynb`; se conserva esa edición.
+
+La fusión híbrida no mejora las métricas de Small en este caso: ambos recuperan las
+dos fuentes esperadas. Esto queda visible en la tabla; el ejercicio permite evaluar
+una técnica sin prometer una mejora automática. La precisión usa las fuentes
+etiquetadas como necesarias para la pregunta, no un juicio universal de relevancia.
+
+Los dos ciclos siguientes documentan la revisión de la versión inicial.
 
 ## Criterios de aceptación
 
 | Requisito | Evidencia en el material |
 |---|---|
 | Partir sin conocimientos de RAG | Glosario inicial y progresión desde documentos y párrafos |
-| Explicar visualmente | Diagrama de indexación/consulta, mapa manual, matriz real y ranking |
+| Explicar visualmente | Flujo, mapa manual, matrices Small/Large, ranking, cobertura, cortes y métricas; panel interactivo |
 | Comparar embeddings y su uso | Small y Large sobre los mismos textos, preguntas, filtro y `k=4` |
 | Usar una base vectorial real | Qdrant local en disco: creación, upsert, consulta, cierre y reapertura |
 | Mostrar un flujo completo | Documentos → fragmentos → embeddings → Qdrant → contexto → respuesta y citas |
 | Practicar decisiones | Cuatro ejercicios sobre `k`, vigencia, cobertura y fidelidad |
+| Ampliar conceptos | Solapamiento, búsqueda híbrida, métricas de recuperación y actualización por metadatos |
 | Repetir sin API | Embeddings reales guardados, búsqueda nueva local y reproducción explícita de generaciones anteriores |
 | Usar modelos con `.env` | Laboratorio voluntario para una pregunta nueva, sin claves en el notebook |
 
@@ -87,8 +136,9 @@ anterior, sin afirmar que ejecutó nuevamente el modelo.
 
 ## Límites y siguiente evaluación
 
-El plan suma 120 minutos, pero todavía no se midió con una cohorte. Durante una
-primera sesión se debe registrar dónde necesitan ayuda y ajustar la conducción.
+El recorrido todavía no se midió con una cohorte. Durante una primera sesión se
+debe registrar dónde necesitan ayuda y ajustar la conducción; las ampliaciones
+se pueden trabajar en una práctica posterior.
 La rúbrica evalúa representación, recuperación, metadatos, generación, fidelidad
 y transferencia; ejecutar todas las celdas no acredita aprendizaje por sí solo.
 
@@ -99,7 +149,8 @@ palabras exactas y no pretende representar un buscador léxico completo.
 
 El control de citas comprueba IDs y frases literales, no todas las implicaciones
 de la respuesta. Qdrant local y este corpus pequeño no evalúan escala, permisos,
-actualización de índices ni rendimiento de un servidor.
+rendimiento de un servidor. El retiro por metadatos introduce una actualización
+simple; no reemplaza un proceso completo de versionado y reindexación.
 
 ## Repetir las comprobaciones
 
@@ -107,14 +158,17 @@ Desde la raíz del repositorio:
 
 ```bash
 uv sync --locked
-uv run pytest -q tests/test_rag_taller.py tests/test_rag_taller_replay.py tests/test_verification.py
+uv run pytest -q tests/test_rag_taller*.py tests/test_rag_environment.py tests/test_verification.py
 uv run ruff check src scripts tests clases proyectos soluciones
 uv run python scripts/verify.py --mode offline --track rag-intro
+uv run python scripts/start_rag_class.py --check
 ```
 
 Los logs, notebook ejecutado, versiones y huellas quedan en
 `reports/offline/rag-intro/`. Las comprobaciones adicionales de soluciones y consulta
 nueva de esta revisión quedaron en `reports/rag-intro-feedback/`.
 `reports/` es evidencia local ignorada por Git; los datos preparados y las guías sí
-forman parte del material de la clase. Para comprobar live otra vez, activa la
-bandera del notebook con el `.env` configurado.
+forman parte del material de la clase. Para comprobar live otra vez, ejecuta
+`uv run python scripts/check_rag_environment.py --live` con el `.env` configurado.
+El diagnóstico guarda su informe en `reports/rag-intro-environment/`. Para abrir
+la clase usa `uv run python scripts/start_rag_class.py`.

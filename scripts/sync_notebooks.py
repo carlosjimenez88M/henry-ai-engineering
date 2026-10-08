@@ -43,6 +43,12 @@ def scripts_a_notebooks(carpeta, ejecutar=False):
             "name": "python3",
         }
         notebook.metadata["language_info"] = {"name": "python", "version": "3.13"}
+        if source.parent.name == "rag_embeddings":
+            notebook.metadata["kernelspec"] = {
+                "display_name": "Henry AI Engineering (.venv)",
+                "language": "python",
+                "name": "henry-ai-engineering",
+            }
         if ejecutar:
             ejecutar_offline(notebook, source.parent)
         nbformat.write(notebook, source.with_suffix(".ipynb"))

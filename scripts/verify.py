@@ -168,7 +168,7 @@ def run_verification(root, mode, track="all"):
         report["versions"] = {
             p: importlib.metadata.version(p)
             for p in ["langgraph", "langchain-core", "langchain-openai", "deepagents", "nbclient",
-                      "qdrant-client", "openai", "numpy", "matplotlib"]
+                      "qdrant-client", "openai", "numpy", "matplotlib", "ipywidgets"]
         }
         report["input_sha256"] = fingerprints(root)
         sources = validate_pairs(root, track)

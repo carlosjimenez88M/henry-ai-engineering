@@ -186,6 +186,87 @@ def dibujar_similitudes(etiquetas: Sequence[str], vectores: Sequence) -> Figure:
     return figura
 
 
+def dibujar_modelos(etiquetas: Sequence[str], vectores_por_modelo: Mapping) -> Figure:
+    """Compara cosenos dentro de cada espacio con textos y escala iguales."""
+    if len(vectores_por_modelo) != 2:
+        raise ValueError("Esta comparación necesita dos modelos.")
+    figura, ejes = plt.subplots(1, 2, figsize=(13, 5.8), layout="constrained")
+    for eje, (modelo, vectores) in zip(ejes, vectores_por_modelo.items(), strict=True):
+        matriz = _vectores_validos(etiquetas, vectores)
+        normalizados = matriz / np.linalg.norm(matriz, axis=1, keepdims=True)
+        cosenos = np.clip(normalizados @ normalizados.T, -1, 1)
+        imagen = eje.imshow(cosenos, vmin=-1, vmax=1, cmap="BrBG")
+        eje.set_xticks(range(len(etiquetas)), etiquetas, rotation=35, ha="right")
+        eje.set_yticks(range(len(etiquetas)), etiquetas)
+        eje.set_title(f"{modelo}\n{matriz.shape[1]} dimensiones", fontsize=13, color=TINTA)
+        for fila in range(len(etiquetas)):
+            for columna in range(len(etiquetas)):
+                valor = cosenos[fila, columna]
+                eje.text(columna, fila, f"{valor:.2f}", ha="center", va="center",
+                         color="white" if abs(valor) > 0.65 else TINTA)
+    figura.colorbar(imagen, ax=list(ejes), shrink=0.8, label="Coseno dentro de cada modelo")
+    figura.suptitle("Mismos textos, dos espacios: no mezclamos sus vectores", fontsize=16)
+    return figura
+
+
+def dibujar_coberturas(comparacion: Sequence[Mapping]) -> Figure:
+    """Fuentes esperadas recuperadas por cada método; no mide generación."""
+    casos = sorted({f["Caso"] for f in comparacion})
+    metodos = list(dict.fromkeys(f["Método"] for f in comparacion))
+    figura, eje = _figura(11, 5)
+    ancho = 0.8 / len(metodos)
+    for indice, metodo in enumerate(metodos):
+        valores = [next(f["Cobertura@4"] for f in comparacion
+                        if f["Caso"] == caso and f["Método"] == metodo) for caso in casos]
+        posiciones = np.arange(len(casos)) + (indice - (len(metodos) - 1) / 2) * ancho
+        barras = eje.bar(posiciones, valores, width=ancho, label=metodo,
+                         color=PALETA[indice], hatch=["", "//", ".."][indice % 3])
+        eje.bar_label(barras, labels=[f"{v:.0%}" for v in valores], padding=3)
+    eje.set_xticks(np.arange(len(casos)), [f"Caso {c}" for c in casos])
+    eje.set(ylim=(0, 1.18), ylabel="Proporción de fuentes esperadas recuperadas")
+    eje.legend(loc="upper left", bbox_to_anchor=(0, 1.16), ncols=len(metodos))
+    eje.set_title("Cobertura con cuatro resultados por método", fontsize=16, pad=42)
+    eje.grid(axis="y", alpha=0.15)
+    return figura
+
+
+def dibujar_fragmentacion(texto: str, partes: Sequence[Mapping]) -> Figure:
+    """Muestra posiciones de cortes por caracteres y sus tramos superpuestos."""
+    figura, eje = _figura(12, max(5, len(partes) * 1.1))
+    for fila, parte in enumerate(partes):
+        inicio, fin = parte["inicio"], parte["fin"]
+        if texto[inicio:fin] != parte["texto"] or not 0 <= inicio < fin <= len(texto):
+            raise ValueError("Los fragmentos deben ser tramos exactos del texto.")
+        eje.barh(fila, fin - inicio, left=inicio, height=0.45, color=PALETA[fila % len(PALETA)])
+        vista = fill(f"{inicio}–{fin}: {parte['texto'][:54]!r}", width=38)
+        eje.text(inicio, fila - 0.28, vista, va="bottom", fontsize=10, color=TINTA)
+    eje.set_yticks(range(len(partes)), [p["id"] for p in partes])
+    eje.set(ylim=(len(partes) - 0.5, -0.8), xlim=(0, len(texto) * 1.3),
+            xlabel="Posición de carácter en el documento")
+    eje.set_title("Cada barra conserva un tramo; el solapamiento repite caracteres",
+                  fontsize=15, pad=20)
+    eje.grid(axis="x", alpha=0.15)
+    return figura
+
+
+def dibujar_metricas(metricas: Sequence[Mapping]) -> Figure:
+    """Compara precisión y recall al cambiar sólo k en una búsqueda."""
+    figura, eje = _figura(10, 5)
+    ks = [fila["k"] for fila in metricas]
+    for clave, etiqueta, color, marcador in [
+        ("precision", "Precisión: parte del contexto etiquetada como necesaria", AZUL, "o"),
+        ("recall", "Recall: parte de las fuentes esperadas que encontramos", VIOLETA, "s"),
+    ]:
+        valores = [fila[clave] for fila in metricas]
+        eje.plot(ks, valores, marker=marcador, color=color, linewidth=2, label=etiqueta)
+    eje.set(ylim=(-0.05, 1.05), xticks=ks, xlabel="Cantidad máxima de resultados (k)",
+            ylabel="Métrica entre 0 y 1")
+    eje.set_title("Camila: qué recuperamos al ampliar el contexto (Large)", fontsize=15, pad=18)
+    eje.legend(loc="upper center", bbox_to_anchor=(0.5, -0.16), fontsize=10)
+    eje.grid(alpha=0.18)
+    return figura
+
+
 def dibujar_ranking(resultados: Sequence[Mapping], titulo: str = "Resultados de la búsqueda") -> Figure:
     """Ranking de cosenos; conserva el orden recibido y acepta resultados Qdrant."""
     if not resultados:

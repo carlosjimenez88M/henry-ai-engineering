@@ -12,9 +12,16 @@
 # - Separar búsqueda, contexto y generación; revisar una respuesta y sus citas.
 # - Detectar una fuente archivada y una pregunta que los documentos no contestan.
 #
-# **Caso:** alguien pregunta «¿Puedo llevarme un libro a casa?». La información del
-# centro vive en documentos, no en la memoria de nuestro asistente. Este proyecto
-# carga esos documentos, los busca y los entrega al generador como contexto.
+# **Caso:** Camila quiere llevarse un libro de ilustración del centro cultural
+# para practicar dibujo en casa. Pregunta: **«¿Qué necesito para llevar un libro y
+# cuándo debo devolverlo?»**. Necesita dos datos: qué presentar y cuál es el plazo.
+# Están en párrafos distintos; hay además una norma vieja que podría confundirla.
+# La información vive en documentos. Buscaremos evidencia para construir la respuesta.
+#
+# | Necesidad de Camila | Fuente que debe llegar al contexto |
+# |---|---|
+# | Qué presentar para retirar el libro | CC-01-P2: credencial y documento de identidad |
+# | Cuándo devolverlo | CC-01-P1: siete días calendario |
 #
 # ![Dos recorridos: indexar documentos y consultar para responder](assets/01_flujo_rag.png)
 #
@@ -28,7 +35,9 @@
 # %% [markdown]
 # ## 1. Abrir los documentos antes de buscar
 #
-# Ejecuta con el kernel `.venv`, de arriba hacia abajo. Esta celda prepara las
+# Abre la clase con `uv run python scripts/start_rag_class.py` desde la raíz.
+# Ejecuta con el kernel **Henry AI Engineering (.venv)**, de arriba hacia abajo.
+# Esta celda prepara las
 # herramientas del laboratorio. No necesitas aprender todos sus imports.
 # `True` y `False` son valores lógicos; `texto[0]` selecciona el primer elemento;
 # `for` recorre una lista; `funcion(...)` ejecuta una operación.
@@ -44,8 +53,10 @@ from tempfile import TemporaryDirectory
 
 import numpy as np
 import pandas as pd
+from IPython.display import display
 from qdrant_client import models
 
+from henry_agents.config import ROOT
 from henry_agents.rag_taller import (
     CONSULTAS,
     FRASES,
@@ -61,16 +72,26 @@ from henry_agents.rag_taller import (
     validar_citas,
     vectores_para,
 )
+from henry_agents.rag_taller_experimentos import (
+    dividir_por_caracteres,
+    evaluar_recuperacion,
+    fusionar_rankings,
+)
+from henry_agents.rag_taller_panel import crear_explorador
 from henry_agents.rag_taller_replay import leer_respuestas, reproducir_respuesta
 from henry_agents.rag_taller_visuales import (
+    dibujar_coberturas,
+    dibujar_fragmentacion,
     dibujar_mapa_manual,
+    dibujar_metricas,
+    dibujar_modelos,
     dibujar_proyeccion,
     dibujar_ranking,
-    dibujar_similitudes,
     mostrar_figura,
 )
 
 documentos = cargar_documentos()
+print("Raíz del proyecto:", ROOT)
 print("Documentos:", len(documentos))
 print("Título:", documentos[0]["titulo"])
 print(documentos[0]["texto"])
@@ -164,7 +185,11 @@ print("Longitud completa:", len(vectores_frases[0]))
 
 # %%
 etiquetas_frases = ["1: libro a casa", "2: préstamo", "3: dibujo", "4: computadora"]
-mostrar_figura(dibujar_similitudes(etiquetas_frases, vectores_frases))
+vectores_por_modelo = {
+    "Small": vectores_frases,
+    "Large": vectores_para(FRASES, LARGE, mode="offline"),
+}
+mostrar_figura(dibujar_modelos(etiquetas_frases, vectores_por_modelo))
 for numero, frase in enumerate(FRASES, start=1):
     print(numero, frase)
 
@@ -239,7 +264,7 @@ with abrir_base(ruta_db) as bd:
         crear_indice(bd, fragmentos, vectores, coleccion, modelo)
         print(coleccion, "puntos:", bd.count(coleccion).count)
 
-pregunta = CONSULTAS[0]
+pregunta = CONSULTAS[3]  # La pregunta de Camila: requisitos Y plazo.
 with abrir_base(ruta_db) as bd:
     hallazgos = buscar(bd, colecciones[LARGE], pregunta, LARGE, k=4, mode="offline")
 print("Pregunta:", pregunta)
@@ -291,6 +316,9 @@ with abrir_base(ruta_db) as bd:
             })
 print(pd.DataFrame(comparacion).to_string(index=False))
 
+# %%
+mostrar_figura(dibujar_coberturas(comparacion))
+
 # %% [markdown]
 # **Cobertura de fuentes:** cuenta cuántas piezas esperadas aparecen entre los
 # cuatro resultados. Si necesitamos dos y recuperamos una, la cobertura es 0.5.
@@ -305,6 +333,28 @@ print(pd.DataFrame(comparacion).to_string(index=False))
 # necesita diferenciar plazo inicial y renovación. `top-1` no siempre basta.
 # Más dimensiones tampoco garantizan mejor recuperación para cualquier tarea.
 #
+# ## Laboratorio visual: qué cambia cuando mueves una decisión
+#
+# El panel consulta **Qdrant real** cada vez que cambias un control. Las tarjetas
+# muestran el texto que llegaría al generador. No se ejecutan llamadas a modelos.
+# Usa los controles para estos tres experimentos, cambiando una decisión a la vez:
+#
+# 1. **Camila:** mantén Large y vigentes. Baja `k` a 1; observa qué necesidades
+#    quedan sin fuente. Vuelve a 4 y localiza plazo y requisitos.
+# 2. **Norma vieja:** elige la pregunta sobre plazo (caso 2), Large y `k=4`.
+#    Desmarca vigencia: aparecerá CC-07-P1. Lee la tarjeta antes de volver a filtrar.
+# 3. **Pregunta ajena:** elige Mongolia (caso 5), Large, `k=4` y vigentes.
+#    Hay candidatos, pero la generación preparada se abstiene.
+#
+# Cambiar contexto puede quitar la respuesta guardada. El panel lo indica:
+# necesitas una respuesta nueva del estudiante o una generación live voluntaria.
+# Al leer el notebook en GitHub los controles no funcionan; ábrelo en JupyterLab.
+
+# %%
+explorador = crear_explorador(ruta_db, colecciones)
+display(explorador)
+
+# %% [markdown]
 # Para interpretar un ID, imprime su texto. Cambia el caso (1 a 4) y el método
 # (`"Literal"`, `"Small"` o `"Large"`) y lee los cuatro resultados.
 
@@ -492,6 +542,156 @@ mostrar_figura(dibujar_proyeccion(
     [f["id"] for f in fragmentos], vectores_para_mapa,
     grupos=["vigente" if f["vigente"] else "archivado" for f in fragmentos],
 ))
+
+# %% [markdown]
+# ## Ampliaciones para continuar la práctica
+#
+# El recorrido principal termina con la entrega de Camila. Las secciones 12–15
+# amplían el laboratorio y pueden trabajarse en otra sesión. Mantienen la misma
+# base y añaden decisiones que aparecen al construir proyectos de RAG.
+#
+# ## 12. Fragmentación y solapamiento: qué se pierde al cortar
+#
+# Dividir por caracteres es fácil, pero puede separar una condición de su regla.
+# **Solapamiento** significa repetir parte del texto entre fragmentos vecinos.
+# Ayuda a conservar contexto cerca del corte, a cambio de repetir información.
+# Los tamaños siguientes cuentan caracteres Python, no tokens del proveedor.
+#
+# Compara el documento de préstamo dividido por párrafos con cortes pequeños.
+# Modifica `tamano_fragmento` y `solapamiento`. Mira qué pasa con la frase del plazo.
+# Este experimento inspecciona los cortes; no calcula embeddings de esos textos nuevos.
+
+# %%
+tamano_fragmento = 100
+solapamiento = 25
+partes_por_caracteres = dividir_por_caracteres(
+    documentos[0]["texto"], tamano=tamano_fragmento, solapamiento=solapamiento,
+)
+mostrar_figura(dibujar_fragmentacion(documentos[0]["texto"], partes_por_caracteres))
+for parte in partes_por_caracteres:
+    print(parte["id"], parte["inicio"], parte["fin"], repr(parte["texto"]))
+
+# %% [markdown]
+# **Comprueba:** ¿algún corte deja incompleta la frase «siete días calendario»?
+# ¿El solapamiento recupera esa frase completa en otro fragmento? Repetir texto no
+# garantiza recuperar todas las condiciones. El tamaño se evalúa con preguntas reales.
+# Si indexaras estos nuevos fragmentos, necesitarías nuevos embeddings y sus IDs.
+#
+# ## 13. Búsqueda híbrida: combinar palabras y significado
+#
+# La búsqueda literal encuentra palabras exactas; los embeddings pueden recuperar
+# una intención expresada de otra forma. Aquí combinamos sus **posiciones** mediante
+# *Reciprocal Rank Fusion* (RRF): cada lista aporta `1 / (60 + posición)` por candidato.
+# Un fragmento que aparece en ambas recibe dos aportes. No sumamos cosenos con
+# conteos de palabras, porque son medidas de escalas distintas.
+#
+# En este ejemplo léxico sencillo, un empate conserva el orden del corpus. La
+# búsqueda híbrida tampoco garantiza mejorar; mide el resultado con las mismas fuentes.
+# Recuperamos seis candidatos de cada lista y fusionamos sus posiciones para
+# seleccionar cuatro; las métricas compararán esos cuatro resultados finales.
+
+# %%
+consulta_hibrida = CONSULTAS[3]
+literal_ordenado = sorted(
+    [f for f in fragmentos if f["vigente"]],
+    key=lambda f: palabras_compartidas(consulta_hibrida, f["texto"]), reverse=True,
+)
+with abrir_base(ruta_db) as bd:
+    semanticos = buscar(bd, colecciones[SMALL], consulta_hibrida, SMALL, k=6)
+ids_literal = [f["id"] for f in literal_ordenado[:6]]
+ids_semanticos = [h.id for h in semanticos]
+hibridos = fusionar_rankings([ids_literal, ids_semanticos], k=4)
+display(pd.DataFrame(hibridos))
+for resultado in hibridos:
+    print(resultado["id"], textos_por_id[resultado["id"]])
+print("Fuentes esperadas:", sorted({"CC-01-P1", "CC-01-P2"}))
+
+# %% [markdown]
+# `rrf_score` sirve para ordenar esta fusión. No es coseno, confianza ni probabilidad.
+# **Actividad:** compara los cuatro primeros de literal, Small e híbrido.
+# Identifica qué fuente se añadió o salió; no elijas por el score más alto.
+#
+# ## 14. Evaluar recuperación: cobertura y ruido
+#
+# **Recall**: fuentes esperadas recuperadas / fuentes esperadas.
+# **Precision**: fuentes esperadas recuperadas / resultados devueltos.
+# La cobertura del recorrido principal era recall. Ahora vemos también qué
+# fracción del contexto responde las necesidades que anotamos previamente.
+#
+# Estas etiquetas incluyen sólo plazo y requisitos; una renovación puede ser útil
+# como información adicional aunque no cuente como esperada aquí. La calidad de las
+# etiquetas condiciona la métrica. No evaluamos la redacción del generador con ellas.
+
+# %%
+metricas = []
+with abrir_base(ruta_db) as bd:
+    for k_evaluacion in [1, 2, 3, 4, 6]:
+        recuperados = buscar(bd, colecciones[LARGE], CONSULTAS[3], LARGE, k=k_evaluacion)
+        evaluacion = evaluar_recuperacion([h.id for h in recuperados], {"CC-01-P1", "CC-01-P2"})
+        metricas.append({"k": k_evaluacion, "IDs": ", ".join(h.id for h in recuperados), **evaluacion})
+display(pd.DataFrame(metricas))
+mostrar_figura(dibujar_metricas(metricas))
+
+# %% [markdown]
+# Esta gráfica cambia `k` usando sólo Large. Para evaluar la fusión anterior,
+# comparamos en otra tabla Literal, Small y Literal+Small con cuatro resultados,
+# el mismo corpus, filtro y pregunta. No mezclamos las dos comparaciones.
+
+# %%
+comparacion_hibrida = []
+for metodo, ids in [
+    ("Literal", ids_literal[:4]),
+    ("Small", ids_semanticos[:4]),
+    ("Literal + Small (RRF)", [h["id"] for h in hibridos]),
+]:
+    comparacion_hibrida.append({
+        "Método": metodo, "IDs": ", ".join(ids),
+        **evaluar_recuperacion(ids, {"CC-01-P1", "CC-01-P2"}),
+    })
+display(pd.DataFrame(comparacion_hibrida))
+
+# %% [markdown]
+# **Actividad:** encuentra el menor `k` que recupera ambas fuentes. ¿Aumentarlo
+# después añade fuentes necesarias o ruido respecto de estas etiquetas?
+# Mantén fijo el corpus, filtro y modelo mientras comparas. Amplía luego el conjunto
+# de preguntas antes de recomendar una configuración para otro proyecto.
+#
+# ## 15. Actualizar información: texto, metadatos y embeddings
+#
+# Una base vectorial necesita mantenerse. Si cambia el texto, se calcula un nuevo
+# embedding y se actualiza el punto. Si sólo cambia su vigencia, se puede modificar
+# el payload sin recalcular el vector. Retirar una norma puede dejar preguntas sin
+# respuesta: hay que comprobar que exista su reemplazo vigente.
+#
+# Practicaremos retirar el documento de préstamo en una colección de laboratorio.
+# Su texto y vectores siguen iguales, pero el filtro dejará de seleccionarlo.
+
+# %%
+with abrir_base(ruta_db) as bd:
+    crear_indice(bd, fragmentos, vectores_para(textos_fragmentos, SMALL), "laboratorio_versiones", SMALL)
+    antes_retiro = buscar(bd, "laboratorio_versiones", CONSULTAS[3], SMALL, k=4)
+    cantidad_antes = bd.count("laboratorio_versiones").count
+    registros, _ = bd.scroll("laboratorio_versiones", limit=100, with_payload=True)
+    ids_a_retirar = [p.id for p in registros if p.payload["documento_id"] == "CC-01"]
+    bd.set_payload("laboratorio_versiones", {"vigente": False}, points=ids_a_retirar)
+    tras_retiro = buscar(bd, "laboratorio_versiones", CONSULTAS[3], SMALL, k=4)
+    cantidad_despues = bd.count("laboratorio_versiones").count
+print("Fragmentos retirados:", len(ids_a_retirar))
+print("Puntos guardados antes y después:", cantidad_antes, cantidad_despues)
+comparacion_retiro = []
+for estado, fuentes in [("Antes", antes_retiro), ("Después", tras_retiro)]:
+    ids = [h.id for h in fuentes]
+    comparacion_retiro.append({"Estado": estado, "IDs": ", ".join(ids),
+                              **evaluar_recuperacion(ids, {"CC-01-P1", "CC-01-P2"})})
+display(pd.DataFrame(comparacion_retiro))
+
+# %% [markdown]
+# **Cierre de las ampliaciones:** relaciona un fallo con una acción: ajustar cortes,
+# combinar búsquedas, ampliar el conjunto de evaluación o actualizar documentos.
+# Para cambiar el corpus oficial de la práctica, el docente regenera los embeddings
+# y las respuestas preparadas; el replay rechaza datos de un corpus anterior.
+# En el retiro cambiamos metadatos: los catorce puntos siguen guardados. El filtro
+# excluye la norma, pero no la borra físicamente ni agrega una norma de reemplazo.
 
 # %% [markdown]
 # ## Soluciones de referencia
